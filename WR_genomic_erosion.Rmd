@@ -1,25 +1,27 @@
 ---
-title: "WR_indDiv_deltaEstimators"
+title: "White rhino genomic erosion"
 author: "Fátima S. Barreiro"
 date: "January 30, 2020"
 output: html_document
 ---
-```{r}
 
-```
+# Analyses and visualization of group, and individual-level metrics of genomic diversity
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
-## R Markdown
+This code compiles all the relevant calculations and data visualizations done on metrics of group and individual genomic diversity for the white rhino dataset. These metrics include:
+- Nucleotide diversity based on transversions
+- Genome-wide heterozygosity based on transversions
+- Exon heterozygosity based on transversions
+- Length of runs of homozygosity (RoH) and estimates of inbreeding calculated as the fraction of the genome in RoH
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+We compared the four groups specified in the main text in the following manner: NWR1 vs NWR2, and SWR1 vs SWR2. The idea is to verify if significant differences exist between pre- and post-bottleneck samples of each subspecies, and to quantify these differences (delta estimators)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+The individual measures of genomic diversity (gw-het, exon het, and RoH length and FRoH), were also computed and compared for a subsampled version of the dataset to check if the genomic erosion patterns observed stand after reducing further sampling bias between pre- and post-bottleneck groups (see section 3).
+
+
 
 Load required libraries
-```{r include=FALSE}
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 library(ggplot2)
 library(cowplot)
 library(ggrepel)
@@ -36,9 +38,9 @@ library(gridExtra)
 
 
 
-# Analyses and visualization of white rhino genomic data
 
 ## 1. Nucleotide diversity based on transversion sites per group 
+
 Read in data
 ```{r}
 pi_NWR = read.csv("NWR_nucDiversity_tv.csv", header=T)
@@ -102,7 +104,9 @@ ggplot(pi_WR, aes(pi_WR$variable, pi_WR$value, fill=pi_WR$variable))  +
 
 
 
+
 ## 2. Individual measures of genomic diversity: Statistical comparisons between time windows and delta estimators 
+
 
 Reading in file containing metadata and genomic diversity metrics 
 ```{r}
@@ -117,6 +121,7 @@ nwr2 = data[data$time_window == "NWR2",]
 swr1 = data[data$time_window == "SWR1",]
 swr2 = data[data$time_window == "SWR2",]
 ```
+
 
 
 ### 2.a) Genome-wide heterozygosity
@@ -508,7 +513,9 @@ plot_grid(A, B, labels=c('unfiltered dataset (n=52)', 'filtered dataset (n=49)')
 
 
 
+
 ## 3. Individual diversity metrics in subsampled dataset
+
 
 Subsampling the full dataset to assess patterns of genomic erosion after mitigated sampling bias
 Basically, from NWR1 we exclude samples originating from DRC because that genetic origin is not represented in our set of NWR2
@@ -527,7 +534,9 @@ swr2_ss = data_ss[data_ss$time_window == "SWR2",]
 ```
 
 
+
 ### 3.a) Genome-wide heterozygosity in subsampled 
+
 
 Summary statistics for gw_het across the 4 groups
 ```{r}
@@ -576,6 +585,7 @@ ggplot(data_ss, aes(time_window, corrected_gw_het)) +
 
 ### 3.b) Exon heterozygosity in subsampled data
 
+
 Summary statistics for exon_het across the 4 groups
 ```{r}
 data_ss %>%
@@ -621,6 +631,7 @@ ggplot(data_ss, aes(time_window, corrected_exon_het, fill=time_window)) +
 
 
 ### 3.c) RoH length and FRoH in subsampled data
+
 
 Two out of the three outlier samples removed in RoH analyses, orginate from DRC, so they would be exluded anyway from the calculations below
 That would leave only one out of three outliers in the subsampled dataset, so we chose to perform these calculations only on the filtered dataset, without any of the 3 outliers
