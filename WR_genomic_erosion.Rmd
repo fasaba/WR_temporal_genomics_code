@@ -135,8 +135,8 @@ wilcox.test(nwr1$corrected_gw_het, nwr2$corrected_gw_het, paired = F)
 wilcox.test(swr1$corrected_gw_het, swr2$corrected_gw_het, paired = F)
 ```
 
-Visualization
 
+Visualization
 ```{r}
 # plot het values per time window
 ggplot(data, aes(time_window, corrected_gw_het)) + 
@@ -174,11 +174,14 @@ data %>%
   group_by(time_window) %>%
   summarize(min=min(corrected_exon_het), max=max(corrected_exon_het), median=median(corrected_exon_het))
 ```
+
+
 Statistical comparison of exon_het median between pre- and post-bottleneck samples for each subspecies
 ```{r}
 wilcox.test(nwr1$corrected_exon_het, nwr2$corrected_exon_het, paired = F)
 wilcox.test(swr1$corrected_exon_het, swr2$corrected_exon_het, paired = F)
 ```
+
 
 Visualization
 ```{r}
@@ -229,6 +232,7 @@ roh <- read.table("WR_RoH_perscaffold.txt", fill = TRUE, col.names = cn, na.stri
 roh = roh[-1,]
 
 ```
+
 
 Calculate length of each RoH per sample
 ```{r}
@@ -294,6 +298,8 @@ d=ggplot(roh_len_info[time_window=='SWR2',], aes(value, colour=new_ID)) +
 plot_grid(a, b, c, d, labels=c("NWR1", "NWR2", "SWR1", "SWR2"), label_size=7, ncol = 2, nrow = 2)
 
 ```
+
+
 Based on these plots we chose 5e-5 as the threshold of low heterozygosity to flag a long-enough region as a RoH. Also we excluded after this we ran the upcoming tests for both the whole sample set and for a set without 3 outliers driven by missing data due to depth of coverage: CD-un.1, CD1911.2, ZA1845.1
 
 
@@ -382,9 +388,9 @@ Froh = as.data.frame(colSums(roh_f, na.rm=T) / 1830000000)
 colnames(Froh) = "froh"
 
 # add metadata
-new_ID = metadata$new_ID
-country = metadata$Country
-time_window = metadata$time_window
+new_ID = data$new_ID
+country = data$Country
+time_window = data$time_window
 
 # create dataframes for all samples and for filtered set
 Froh_f = cbind(new_ID, country, time_window, Froh)
@@ -403,6 +409,7 @@ Froh_f_filt %>%
   group_by(time_window) %>%
   summarize(min=min(froh, na.rm = TRUE), max=max(froh, na.rm = TRUE), median = median(froh, na.rm = TRUE))
 ```
+
 
 Statistical comparison of Froh median between pre- and post-bottleneck samples for each subspecies for the unfiltered data (reported only in supplementary material)
 ```{r}
@@ -442,6 +449,7 @@ median(swr2$froh)
 wilcox.test(nwr1$froh, nwr2$froh, paired = F)
 wilcox.test(swr1$froh, swr2$froh, paired = F)
 ```
+
 
 Visualize Froh across groups
 ```{r}
@@ -535,8 +543,8 @@ wilcox.test(nwr1_ss$corrected_gw_het, nwr2_ss$corrected_gw_het, paired = F)
 wilcox.test(swr1_ss$corrected_gw_het, swr2_ss$corrected_gw_het, paired = F)
 ```
 
-Visualization
 
+Visualization
 ```{r}
 # plot het values per time window
 ggplot(data_ss, aes(time_window, corrected_gw_het)) + 
@@ -574,10 +582,11 @@ data_ss %>%
   group_by(time_window) %>%
   summarize(min=min(corrected_exon_het), max=max(corrected_exon_het), median=median(corrected_exon_het))
 ```
+
 Statistical comparison of exon_het median between pre- and post-bottleneck samples for each subspecies
 ```{r}
-wilcox.test(nwr1$corrected_exon_het, nwr2$corrected_exon_het, paired = F)
-wilcox.test(swr1$corrected_exon_het, swr2$corrected_exon_het, paired = F)
+wilcox.test(nwr1_ss$corrected_exon_het, nwr2_ss$corrected_exon_het, paired = F)
+wilcox.test(swr1_ss$corrected_exon_het, swr2_ss$corrected_exon_het, paired = F)
 ```
 
 Visualization
