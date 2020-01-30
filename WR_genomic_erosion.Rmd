@@ -1,0 +1,414 @@
+---
+title: "WR_indDiv_deltaEstimators"
+author: "Fátima S. Barreiro"
+date: "January 30, 2020"
+output: html_document
+---
+```{r}
+
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+Load required libraries
+```{r}
+library(ggplot2)
+library(cowplot)
+library(ggrepel)
+library(reshape2)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+require(scales)
+library(ggpubr)
+library(tidyr)
+library(PairedData)
+library(gridExtra)
+```
+
+
+
+# Analyses and visualization of white rhino genomic data
+
+## 1. Nucleotide diversity based on transversion sites per group 
+Read in data
+```{r}
+pi_NWR = read.csv("NWR_nucDiversity_tv.csv", header=T)
+pi_SWR = read.csv("SWR_nucDiversity_tv.csv", header=T)
+```
+
+Bind relevant columns and reshape
+```{r}
+pi_WR = as.data.frame(cbind(pi_NWR$pi_NWR1, pi_NWR$pi_NWR2, pi_SWR$pi_SWR1, pi_SWR$pi_SWR2))
+colnames(pi_WR) = c("NWR1", "NWR2", "SWR1", "SWR2")
+
+pi_WR = reshape2::melt(pi_WR)
+
+```
+
+Summary statistics for pi_tv across the 4 groups
+```{r}
+pi_WR %>%
+  group_by(variable) %>%
+  summarize(min=min(value), max=max(value), median=median(value))
+```
+
+
+Statistical comparisons of medians between pi-tv in pre- and post-bottleneck samples per subspecies
+```{r}
+pi_nwr1 = subset(pi_WR,  variable == "NWR1", value, drop = TRUE)
+pi_nwr2 = subset(pi_WR,  variable == "NWR2", value, drop = TRUE)
+pi_swr1 = subset(pi_WR,  variable == "SWR1", value, drop = TRUE)
+pi_swr2 = subset(pi_WR,  variable == "SWR2", value, drop = TRUE)
+
+
+wilcox.test(pi_nwr1, pi_nwr2, paired=TRUE)
+wilcox.test(pi_swr1, pi_swr2, paired=TRUE)
+```
+
+
+Visualization
+```{r}
+# plot
+pi = ggplot(pi_WR, aes(pi_WR$variable, pi_WR$value, fill=pi_WR$variable))  +
+  
+  # format scatter points
+  geom_jitter(aes(colour=pi_WR$variable), shape=17, position=position_jitter(0.11), cex=.7, alpha=.8) +  
+  
+  # format boxplots
+  geom_boxplot(alpha=.2, lwd=.2, fill='gray') +
+  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # get summary stats and groups comparison
+  stat_compare_means(paired=TRUE, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2")), label="p.format", label.y=0.00063, size=1.7) +
+  stat_compare_means(paired=TRUE, method = "wilcox.test", comparisons= list(c("SWR1", "SWR2")), label="p.format", label.y=0.00042, size=1.7) +
+  
+  # embellish
+  scale_y_continuous(limits=c(0.0001,0.00070), labels = function(x) format(x, scientific = FALSE)) +
+  labs(x=NULL, y="Nucleotide diversity-tv per scaffold") + 
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5))
+  
+
+```
+
+
+
+
+## 2. Individual measures of genomic diversity: Statistical comparisons between time windows and delta estimators 
+
+Reading in file containing metadata and genomic diversity metrics 
+```{r}
+data = read.csv("WR_TableS2_v2.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+
+Subsetting data per group (subspecies and time window)
+```{r}
+nwr1 = data[data$time_window == "NWR1",]
+nwr2 = data[data$time_window == "NWR2",]
+swr1 = data[data$time_window == "SWR1",]
+swr2 = data[data$time_window == "SWR2",]
+```
+
+
+### 2.a) Genome-wide heterozygosity
+
+Summary statistics for gw_het across the 4 groups
+```{r}
+data %>%
+  group_by(time_window) %>%
+  summarize(min=min(corrected_gw_het), max=max(corrected_gw_het), median=median(corrected_gw_het))
+```
+
+
+Statistical comparison of gw_het median between pre- and post-bottleneck samples for each subspecies
+```{r}
+wilcox.test(nwr1$corrected_gw_het, nwr2$corrected_gw_het, paired = F)
+wilcox.test(swr1$corrected_gw_het, swr2$corrected_gw_het, paired = F)
+```
+
+Visualization
+
+```{r}
+# plot het values per time window
+het_gw = ggplot(data, aes(time_window, corrected_gw_het)) + 
+  
+  # plot violin per group
+  geom_violin(alpha=.2, aes(colour=time_window, fill=time_window),  lwd=.2) +
+
+  # add scatter points per group
+  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.8) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun.y=mean, fun.ymin = function (corrected_gw_het) mean(corrected_gw_het) - sd(corrected_gw_het), 
+               fun.ymax = function(corrected_gw_het) mean(corrected_gw_het) + sd(corrected_gw_het), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.0005, 0.0003), size=1.7) +
+  
+  # embellish
+  scale_y_continuous(limits=c(0, 0.0005),labels = function(x) format(x, scientific = FALSE)) +
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5)) +
+  labs(x=NULL, y="Genome-wide heterozygosity-tv") 
+```
+
+
+
+### 2.b) Exon heterozygosity
+
+Summary statistics for exon_het across the 4 groups
+```{r}
+data %>%
+  group_by(time_window) %>%
+  summarize(min=min(corrected_exon_het), max=max(corrected_exon_het), median=median(corrected_exon_het))
+```
+Statistical comparison of gw_het median between pre- and post-bottleneck samples for each subspecies
+```{r}
+wilcox.test(nwr1$corrected_exon_het, nwr2$corrected_exon_het, paired = F)
+wilcox.test(swr1$corrected_exon_het, swr2$corrected_exon_het, paired = F)
+```
+
+Visualization
+```{r}
+het_exons = ggplot(data, aes(time_window, corrected_exon_het, fill=time_window)) + 
+  
+  # plot violin per group
+  geom_violin(alpha=.2, aes(colour=time_window, fill=time_window),  lwd=.2) +
+
+  # add scatter points per group
+  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.8) + 
+  
+  # stats for exon violin
+  stat_summary(fun.y=mean, fun.ymin = function (corrected_exon_het) mean(corrected_exon_het) - sd(corrected_exon_het), 
+               fun.ymax = function(corrected_exon_het) mean(corrected_exon_het) + sd(corrected_exon_het), geom = "pointrange" , size=.12, stroke=.4) +
+  stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
+  
+  # compare medians between violins
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00036, 0.00025), size=1.7) +
+  
+  # choose colours
+  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # embellish
+  scale_y_continuous(limits=c(0, 0.0005), labels = function(x) format(x, scientific = FALSE)) +
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5)) +
+  labs(x=NULL, y="Exon heterozygosity-tv")
+  
+```
+
+
+
+### 2.c) RoH length and FRoH
+
+Read in data on RoH number and length for each sample and reshape appropriately
+```{r}
+
+# read in the file to determine the max number of columns
+x <- scan("WR_RoH_perscaffold.txt", what = "", sep = "\n")
+x <- strsplit(x, "[ \t]+") # split string by white space
+max.col <- max(sapply(x, length))
+
+# specify col.names as ?read.table suggests and set old header to missing values
+cn <- paste("RoH", 1:max.col, sep = "")
+roh <- read.table("WR_RoH_perscaffold.txt", fill = TRUE, col.names = cn, na.strings = "RoH")
+
+# delete old header (first row)
+roh = roh[-1,]
+
+```
+
+Calculate length of each RoH per sample
+```{r}
+# calculate length of RoH per sample in bp
+roh_len = roh*1000000 - ((roh-1)*500000)
+```
+
+
+Add relevant metadata from the 'data' dataframe
+```{r}
+# bind relevant metadata to the RoHs length
+new_ID = data$new_ID
+country = data$Country
+time_window = data$time_window
+
+roh_len_info = cbind(new_ID, country, time_window, roh_len)
+
+# melt data with metadata variables as ID
+roh_len_info = reshape2::melt(roh_len_info, id.vars = c("new_ID", "country", "time_window"))
+```
+
+
+
+Visualize distribution of heterozygosity values per sample
+```{r}
+a=ggplot(roh_len_info[time_window=='NWR1',], aes(value, colour=new_ID)) +
+  geom_density(aes(y=5e5 * ..count..)) +
+  scale_x_continuous(limits=c(1e6, 3e7), breaks=c(1e6, 5e6, 1e7, 1.5e7, 2e7, 2.5e7), labels=c(1, 5, 10, 15, 20, 25)) + 
+  theme_bw() +
+  theme(legend.title = element_blank(), legend.text = element_text(size = 5), 
+        legend.position = c(.9, 0.5), legend.background = element_rect(fill=NA, size=0.1, linetype = 0),
+        legend.key.size = unit(.3, "cm")) +
+  labs(x="RoH length (Mbp)", y ="Number of RoH")
+
+b=ggplot(roh_len_info[time_window=='NWR2',], aes(value, colour=new_ID)) +
+  geom_density(aes(y=5e5 * ..count..)) +
+  scale_x_continuous(limits=c(1e6, 3e7), breaks=c(1e6, 5e6, 1e7, 1.5e7, 2e7, 2.5e7), labels=c(1, 5, 10, 15, 20, 25)) + 
+  theme_bw() +
+  theme(legend.title = element_blank(), legend.text = element_text(size = 5), 
+        legend.position = c(.9, 0.5), legend.background = element_rect(fill=NA, size=0.1, linetype = 0),
+        legend.key.size = unit(.3, "cm")) +
+  labs(x="RoH length (Mbp)", y ="Number of RoH")
+
+c=ggplot(roh_len_info[time_window=='SWR1',], aes(value, colour=new_ID)) +
+  geom_density(aes(y=5e5 * ..count..)) +
+  scale_x_continuous(limits=c(1e6, 3e7), breaks=c(1e6, 5e6, 1e7, 1.5e7, 2e7, 2.5e7), labels=c(1, 5, 10, 15, 20, 25)) + 
+  theme_bw() +
+  theme(legend.title = element_blank(), legend.text = element_text(size = 5), 
+        legend.position = c(.9, 0.5), legend.background = element_rect(fill=NA, size=0.1, linetype = 0),
+        legend.key.size = unit(.3, "cm")) +
+  labs(x="RoH length (Mbp)", y ="Number of RoH")
+
+d=ggplot(roh_len_info[time_window=='SWR2',], aes(value, colour=new_ID)) +
+  geom_density(aes(y=5e5 * ..count..)) +
+  scale_x_continuous(limits=c(1e6, 3e7), breaks=c(1e6, 5e6, 1e7, 1.5e7, 2e7, 2.5e7), labels=c(1, 5, 10, 15, 20, 25)) + 
+  theme_bw() +
+  theme(legend.title = element_blank(), legend.text = element_text(size = 5), 
+        legend.position = c(.9, 0.5), legend.background = element_rect(fill=NA, size=0.1, linetype = 0),
+        legend.key.size = unit(.3, "cm")) +
+  labs(x="RoH length (Mbp)", y ="Number of RoH")
+
+
+plot_grid(a, b, c, d, labels=c("NWR1", "NWR2", "SWR1", "SWR2"), label_size=7, ncol = 2, nrow = 2)
+
+```
+Based on these plots we chose 5e-5 as the threshold of low heterozygosity to flag a long-enough region as a RoH. Also we excluded after this we ran the upcoming tests for both the whole sample set and for a set without 3 outliers driven by missing data due to depth of coverage: CD-un.1, CD1911.2, ZA1845.1
+
+
+Prepare a data frame like roh_len_info without the outliers
+```{r}
+# filtering 3 outlier samples out
+roh_len_info_filt = roh_len_info[roh_len_info$new_ID != 'CD-un.1' & roh_len_info$new_ID != 'CD1911.2' & roh_len_info$new_ID != 'ZA1845.1', ]
+```
+
+
+Filter out isolated windows of low heterozygosity (not considered RoH)
+```{r}
+roh_len_info_above1Mb = roh_len_info[roh_len_info$value > 1000000,]
+roh_len_info_filt_above1Mb = roh_len_info_filt[roh_len_info_filt$value > 1000000,]
+```
+
+
+Calculate summary statistics for RoH length to include in plots for both the entire sample set and without the 3 outliers
+```{r}
+# stats for all samples
+group = roh_len_info_above1Mb %>%
+  group_by(time_window) %>%
+  summarize(min=round((min(value)/1000000), digits=2), max=round((max(value)/1000000), digits=2), 
+            mean=round((mean(value)/1000000), digits=2))
+
+# stats for filtered samples (-3 outliers)
+group_filt = roh_len_info_filt_above1Mb %>%
+  group_by(time_window) %>%
+  summarize(min=round((min(value)/1000000), digits=2), max=round((max(value)/1000000), digits=2), 
+            mean=round((mean(value)/1000000), digits=2))
+
+```
+
+
+
+Visualize RoH length distrubution per group for all samples and for the filtered sample set
+```{r}
+A = ggplot(roh_len_info_above1Mb, aes(value, colour=time_window, fill=time_window)) +
+  geom_density(aes(y=5e5 * ..count..), alpha=.08, lwd=.4) +
+  scale_colour_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  scale_x_continuous(limits=c(1.5e6, 22e6), breaks=c(1.5e6, 5e6, 10e6, 15e6, 20e6), 
+                     labels=c(1.5, 5, 10, 15, 20)) + 
+  theme_bw() +
+  theme(legend.title = element_blank(), legend.text = element_text(size=5), 
+        legend.position = c(0.78, 0.9), legend.background = element_rect(fill=NA, size=0.1, linetype = 0),
+        legend.key.size = unit(.35, "cm"), axis.title=element_text(size=7), axis.text=element_text(size=7)) +
+  labs(x="RoH length (Mbp)", y ="Number of RoH") +
+  annotation_custom(tableGrob(group_filt[1:4,], rows=NULL, theme = ttheme_default(base_size=5)), 
+                    xmin=13e6, xmax=17e6, ymin=200, ymax=400)
+
+B = ggplot(roh_len_info_filt_above1Mb, aes(value, colour=time_window, fill=time_window)) +
+  geom_density(aes(y=5e5 * ..count..), alpha=.08, lwd=.4) +
+  scale_colour_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  scale_x_continuous(limits=c(1.5e6, 22e6), breaks=c(1.5e6, 5e6, 10e6, 15e6, 20e6), 
+                     labels=c(1.5, 5, 10, 15, 20)) + 
+  theme_bw() +
+  theme(legend.title = element_blank(), legend.text = element_text(size=5), 
+        legend.position = c(0.78, 0.9), legend.background = element_rect(fill=NA, size=0.1, linetype = 0),
+        legend.key.size = unit(.35, "cm"), axis.title=element_text(size=7), axis.text=element_text(size=7)) +
+  labs(x="RoH length (Mbp)", y ="Number of RoH") +
+  annotation_custom(tableGrob(group_filt[1:4,], rows=NULL, theme = ttheme_default(base_size=5)), 
+                    xmin=13e6, xmax=17e6, ymin=200, ymax=400)
+
+```
+
+
+Calculate FRoH as an estimate of inbreeding by dividing total length falling in RoH by the total genomic length scanned for each sample
+```{r}
+# transpose and assign sample IDs as column names
+roh_f = t(roh_len)
+colnames(roh_f) = data$new_ID
+
+# turn values equal or lower to 1Mbp into missing data
+roh_f[roh_f<=1000000]=NA
+
+# sum all remaning values per column and divide by total length of windows screened
+# the total length screened is the number of windows multiplied by 1Mbp, minus 
+# number of windows minus 1 multiplied by 0.5 Mbp ->
+# -> (3659 windows*1Mbp) - ((3659-1)*0.5Mbp)
+
+Froh = as.data.frame(colSums(roh_f, na.rm=T) / 1830000000)
+colnames(Froh) = "froh"
+
+# add metadata
+new_ID = metadata$new_ID
+country = metadata$Country
+time_window = metadata$time_window
+
+# create dataframes for all samples and for filtered set
+Froh_f = cbind(new_ID, country, time_window, Froh)
+Froh_f_filt = Froh_f[Froh_f$new_ID != 'CD-un.1' & Froh_f$new_ID != 'CD1911.2' & Froh_f$new_ID != 'ZA1845.1', ]
+
+```
+
+
+Get summary statistics for Froh across groups for both the unfiltered and filtered sample sets
+```{r}
+Froh_f %>%
+  group_by(time_window) %>%
+  summarize(median = median(Froh, na.rm = TRUE), min=min(Froh, na.rm = TRUE), max=max(Froh, na.rm = TRUE))
+
+Froh_f_filt %>%
+  group_by(time_window) %>%
+  summarize(median = median(Froh, na.rm = TRUE), min=min(Froh, na.rm = TRUE), max=max(Froh, na.rm = TRUE))
+```
+
+
+
+
+## Individual diversity metrics in subsampled dataset
+Subsampling set to assess patterns with mitigated sampling bias
+
+```{r}
+data_ss = subset(data, Country != 'DRC' & Country != 'captive' | is.na(Country))
+```
+
