@@ -103,7 +103,7 @@ Missing: Pi-tv for subsampled dataset (running in computerome)
 
 Reading in file containing metadata and genomic diversity metrics 
 ```{r}
-data = read.csv("WR_TableS2_v2.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+data = read.csv("WR_TableS1_v2.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 ```
 
 
