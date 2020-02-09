@@ -269,11 +269,11 @@ gw_het_ss = ggplot(data_ss, aes(time_window, corrected_gw_het)) +
                fun.ymax = function(corrected_gw_het) mean(corrected_gw_het) + sd(corrected_gw_het), geom = "pointrange" , size=.12, stroke=.4, col="black") +
   stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
   
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00022, 0.00019), size=2) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00022, 0.00019), size=1.8) +
   
   # embellish
   scale_y_continuous(limits=c(0.00003, 0.00025),labels = function(x) format(x, scientific = FALSE)) +
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5)) +
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=6)) +
   labs(x=NULL, y="Genome-wide heterozygosity at tv") 
 ```
 
@@ -311,7 +311,7 @@ exon_het_ss = ggplot(data_ss, aes(time_window, corrected_exon_het, fill=time_win
   stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
   
   # compare medians between violins
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00016, 0.00015), size=2) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00016, 0.00015), size=1.8) +
   
   # choose colours
   scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -319,7 +319,7 @@ exon_het_ss = ggplot(data_ss, aes(time_window, corrected_exon_het, fill=time_win
   
   # embellish
   scale_y_continuous(limits=c(0.00003, 0.00025), labels = function(x) format(x, scientific = FALSE)) +
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5)) +
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=6)) +
   labs(x=NULL, y="Exon heterozygosity at tv")
   
 ```
@@ -714,11 +714,11 @@ froh_plot_ss = ggplot(Froh_f_filt_ss, aes(time_window, froh, fill=time_window)) 
   stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
   
   stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), 
-                     label.y=c(0.36, 0.53), size=2) +
+                     label.y=c(0.36, 0.53), size=1.8) +
   
   # embellish
   scale_y_continuous(limits=c(0, 0.6), labels = function(x) format(x, scientific = FALSE)) +
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5)) +
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=6)) +
   labs(x=NULL, y="FRoH")
 ```
 
@@ -738,7 +738,7 @@ dev.off()
 ## Making Figure S4
 Combine plots for Figure S4 in one page
 ```{r eval=FALSE, include=FALSE}
-pdf('WR_v2_FigS4_v1.pdf', height=5, useDingbats=F)
+pdf('WR_v2_FigS4_v1.pdf', height=3.5, useDingbats=F)
 plot_grid(gw_het_ss, exon_het_ss, froh_plot_ss, labels=c('A','B','C'), label_size=9, nrow=1 , ncol=3)
 dev.off()
 ```
