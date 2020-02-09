@@ -231,7 +231,7 @@ swr2_ss = data_ss[data_ss$time_window == "SWR2",]
 
 
 
-### 3.a) Genome-wide heterozygosity in subsampled 
+### 3.a) Genome-wide heterozygosity in subsampled dataset
 
 
 Summary statistics for gw_het across the 4 groups
@@ -255,10 +255,10 @@ Visualization
 gw_het_ss = ggplot(data_ss, aes(time_window, corrected_gw_het)) + 
   
   # plot violin per group
-  geom_violin(alpha=.2, aes(colour=time_window, fill=time_window),  lwd=.2) +
+  geom_violin(alpha=.3, aes(colour=time_window, fill=time_window),  lwd=.2) +
 
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.8) + 
+  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.9) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -269,12 +269,12 @@ gw_het_ss = ggplot(data_ss, aes(time_window, corrected_gw_het)) +
                fun.ymax = function(corrected_gw_het) mean(corrected_gw_het) + sd(corrected_gw_het), geom = "pointrange" , size=.12, stroke=.4, col="black") +
   stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
   
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.0005, 0.0003), size=1.7) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00022, 0.00019), size=2) +
   
   # embellish
-  scale_y_continuous(limits=c(0, 0.0005),labels = function(x) format(x, scientific = FALSE)) +
+  scale_y_continuous(limits=c(0.00003, 0.00025),labels = function(x) format(x, scientific = FALSE)) +
   theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5)) +
-  labs(x=NULL, y="Genome-wide heterozygosity-tv") 
+  labs(x=NULL, y="Genome-wide heterozygosity at tv") 
 ```
 
 
@@ -300,10 +300,10 @@ Visualization
 exon_het_ss = ggplot(data_ss, aes(time_window, corrected_exon_het, fill=time_window)) + 
   
   # plot violin per group
-  geom_violin(alpha=.2, aes(colour=time_window, fill=time_window),  lwd=.2) +
+  geom_violin(alpha=.3, aes(colour=time_window, fill=time_window),  lwd=.2) +
 
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.8) + 
+  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.9) + 
   
   # stats for exon violin
   stat_summary(fun.y=mean, fun.ymin = function (corrected_exon_het) mean(corrected_exon_het) - sd(corrected_exon_het), 
@@ -311,16 +311,16 @@ exon_het_ss = ggplot(data_ss, aes(time_window, corrected_exon_het, fill=time_win
   stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
   
   # compare medians between violins
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00036, 0.00025), size=1.7) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00016, 0.00015), size=2) +
   
   # choose colours
   scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
   scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
   
   # embellish
-  scale_y_continuous(limits=c(0, 0.0005), labels = function(x) format(x, scientific = FALSE)) +
+  scale_y_continuous(limits=c(0.00003, 0.00025), labels = function(x) format(x, scientific = FALSE)) +
   theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5)) +
-  labs(x=NULL, y="Exon heterozygosity-tv")
+  labs(x=NULL, y="Exon heterozygosity at tv")
   
 ```
 
@@ -702,7 +702,7 @@ froh_plot_ss = ggplot(Froh_f_filt_ss, aes(time_window, froh, fill=time_window)) 
   geom_violin(alpha=.3, aes(colour=time_window), lwd=.2) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=1, alpha=.9) + 
+  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.9) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -711,15 +711,15 @@ froh_plot_ss = ggplot(Froh_f_filt_ss, aes(time_window, froh, fill=time_window)) 
   # add stats
   stat_summary(fun.y=mean, size=0.14, fun.ymin = function (froh) mean(froh) - sd(froh), 
                fun.ymax = function(froh) mean(froh) + sd(froh), geom = "pointrange", stroke=.5) +
-  stat_summary(fun.y=median, size=1.8, geom="point", col="black", shape=2) +
+  stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
   
   stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), 
-                     label.y=c(0.41, 0.53), size=3) +
+                     label.y=c(0.36, 0.53), size=2) +
   
   # embellish
   scale_y_continuous(limits=c(0, 0.6), labels = function(x) format(x, scientific = FALSE)) +
-  theme_bw() + theme(legend.position = "none", axis.title=element_text(size=7), axis.text=element_text(size=7)) +
-  labs(x=NULL, y="F-RoH")
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5)) +
+  labs(x=NULL, y="FRoH")
 ```
 
 
@@ -739,12 +739,9 @@ dev.off()
 Combine plots for Figure S4 in one page
 ```{r eval=FALSE, include=FALSE}
 pdf('WR_v2_FigS4_v1.pdf', height=5, useDingbats=F)
-plot_grid(pi_ss, gw_het_ss, exon_het_ss, froh_plot_ss, labels=c('A','B','C','D'), label_size=9, nrow=2 , ncol=2)
+plot_grid(gw_het_ss, exon_het_ss, froh_plot_ss, labels=c('A','B','C'), label_size=9, nrow=1 , ncol=3)
 dev.off()
 ```
-
-
-
 
 
 
