@@ -103,7 +103,7 @@ Missing: Pi-tv for subsampled dataset (running in computerome)
 
 Reading in file containing metadata and genomic diversity metrics 
 ```{r}
-data = read.csv("WR_TableS1_v2.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+data = read.csv("WR_TableS1_v3.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 ```
 
 
@@ -218,7 +218,7 @@ Basically, from NWR1 we exclude samples originating from DRC because that geneti
 From SWR2 we exclude captive individuals, since they were bred in zoos, so we focus only on wild SWR when comparing pre- and post-bottleneck
 
 ```{r}
-data_ss = subset(data, Country != 'DRC' & Country != 'captive' | is.na(Country))
+data_ss = subset(data, country != 'DRC' & country != 'captive' | is.na(country))
 ```
 
 Subsetting data per group (subspecies and time window)
@@ -464,7 +464,7 @@ Add relevant metadata from the 'data' dataframe
 ```{r}
 # bind relevant metadata to the RoHs length
 new_ID = data$new_ID
-country = data$Country
+country = data$country
 time_window = data$time_window
 
 roh_len_info = cbind(new_ID, country, time_window, roh_len)
@@ -526,7 +526,7 @@ colnames(Froh) = "froh"
 
 # add metadata
 new_ID = data$new_ID
-country = data$Country
+country = data$country
 time_window = data$time_window
 
 # create dataframes for all samples and for filtered set

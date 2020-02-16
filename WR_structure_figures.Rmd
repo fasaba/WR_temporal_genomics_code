@@ -5,24 +5,20 @@ date: "February 16, 2020"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+The code below is dedicated to visualizing the output of the structure analyses ran on the white rhino temporal genomics dataset. It includes PCA analysis, UMAP dimensionality reduction and an inactive line of code used for visualization of admixture results with pong. This corresponds to Figures 1B, 1C and S2 in the manuscript.
+
+In order to thread chunks of code in R and in python, the R package 'reticulate' was required.
+
+
 
 Load required libraries
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 library(ggplot2)
-library(cowplot)
-library(ggrepel)
-library(reshape2)
 library(dplyr)
 library(tidyverse)
-library(data.table)
-require(scales)
 library(ggpubr)
 library(tidyr)
-library(PairedData)
-library(gridExtra)
+library(cowplot)
 ```
 
 
