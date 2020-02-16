@@ -1,0 +1,229 @@
+---
+title: "WR_structure_figures"
+author: "Fátima S. Barreiro"
+date: "February 16, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load required libraries
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(ggplot2)
+library(cowplot)
+library(ggrepel)
+library(reshape2)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+require(scales)
+library(ggpubr)
+library(tidyr)
+library(PairedData)
+library(gridExtra)
+```
+
+
+## PCA with output from PCangsd v 0.973
+
+```{r}
+# prepare metadata
+MD <- read.csv("WR_TableS1_v3.csv", h=T)
+
+MD_unrelated = MD[MD$new_ID != 'CD-un.1' & MD$new_ID != 'un1856.1' & MD$new_ID != 'ZA1842.1', ]
+```
+
+```{r}
+# prepare covariance matrix
+D <-"WR.above13Mb_NoSexChr_NonMaskedRegions_nonRelated_tv.cov"
+m <- as.matrix(read.table(D))
+
+# run the eigen decomposition
+e <- eigen(m)
+
+# calculate the eigenvalues
+eval = e$values/sum(e$values)
+```
+
+
+Select PCs to plot and bind them to metadata
+```{r}
+# PC1 and PC2
+pcs12 <- e$vectors[,1:2]
+evec12 <- cbind(pcs12, MD_unrelated)
+
+# PC2 and PC3
+pcs23 <- e$vectors[,2:3]
+evec23 <- cbind(pcs23, MD_unrelated)
+```
+
+
+Visualize PCs with legend per subspecies, time window and country of origin
+```{r}
+## PC1 vs PC2
+A = ggplot(evec12, aes(x=evec12$`1`, y=evec12$`2`))+
+  
+  # draw intercept lines
+  geom_vline(xintercept=0, colour="gray", linetype = "longdash")+
+  geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
+  
+  # plot data points (2 legend alternatives)
+  geom_point(aes(colour=evec12$time_window, shape=evec12$Country), alpha=.7, size=2) + 
+  
+  # assign colors and shapes
+  scale_colour_manual(values=c("gold2", "darkorange", "royalblue4", "steelblue2")) +
+  scale_shape_manual(values=c(7, 16, 10, 17, 18, 15, 9, 8)) +
+  
+  # labels, titles, background, etc.
+  xlab(paste0("PC1 (", round(eval[1]*100, 2), "%)"))+
+  ylab(paste0("PC2 (", round(eval[2]*100, 2), "%)"))+
+  theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
+        strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=8), legend.text=element_text(size=7),
+        legend.key.size=unit(.3, "cm"))
+
+
+## PC2 vs PC3
+B = ggplot(evec23, aes(x=evec23$`1`, y=evec23$`2`))+
+  
+  # draw intercept lines
+  geom_vline(xintercept=0, colour="gray", linetype = "longdash")+
+  geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
+  
+  # plot data points with legend per time window and country
+  geom_point(aes(colour=evec23$time_window, shape=evec23$Country), alpha=.7, size=2) + 
+  
+  # assign colors and shapes to time windows and countries
+  scale_colour_manual(values=c("gold2", "darkorange", "royalblue4", "steelblue2")) +
+  scale_shape_manual(values=c(7, 16, 10, 17, 18, 15, 9, 8)) +
+  
+  # labels, titles, background, etc.
+  xlab(paste0("PC2 (", round(eval[2]*100, 2), "%)"))+
+  ylab(paste0("PC3 (", round(eval[3]*100, 2), "%)"))+
+  theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
+        strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=8), legend.text=element_text(size=7),
+        legend.key.size=unit(.3, "cm"))
+
+
+## place both PCA plots on same panel
+plot_grid(A, B, labels=c('A', 'B'), ncol = 1, nrow = 2)
+```
+
+
+
+## Reduction of dimensionality of PC data with UMAP
+
+### Prep the input for UMAP
+
+```{r}
+## Take the first 30 PCs in the covariance matrix
+vectors_30 = e$vectors[,1:30]
+values_30 = eval[1:30]
+
+# Find out how much of the total variability is encompassed in these 30 PCs
+sum(eval[1:30])
+
+# Multiply each eigenvector by its corresponding eigenvalue
+pcs_30 = sweep(vectors_30, 2, values_30, "*")
+
+# Assign corresponding column names to the new dataframe
+colnames(pcs_30) = c("PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", "PC10",
+                     "PC11", "PC12", "PC13", "PC14", "PC15", "PC16", "PC17", "PC18", "PC19", "PC20", "PC21", 
+                     "PC22", "PC23", "PC24", "PC25", "PC26", "PC27", "PC28", "PC29", "PC30")
+```
+
+```{r}
+# write out as a table
+write.table(pcs_30, "WR_NonRelated_30pcs.txt", sep="\t")
+```
+
+
+
+### Computing embeddings of PC data with UMAP
+
+Install required modules
+```{bash}
+pip3 install numpy
+pip3 install pandas
+pip3 install umap
+```
+
+
+Load the required modules
+```{python}
+# import required packages and libraries
+import numpy as np
+import pandas as pd
+import umap
+```
+
+
+Load the dataframe from PC data parsing above
+```{python}
+# import data and turn it into array
+PCs = pd.read_csv("WR_NonRelated_30pcs.txt", sep='\t')
+PCs.to_numpy()
+```
+
+Call the reducer function from UMAP
+```{python}
+reducer = umap.UMAP()
+```
+
+Reduce dimensionality with UMAP
+```{python}
+# train the model in umap with your data and reduce dimensionality of your dataset
+embedding = reducer.fit_transform(PCs)
+
+# the shape of the output should be n_samples x 2
+embedding.shape 
+```
+
+Save the output for visualization
+```{python}
+# save output of umap as a text file to plot elsewhere
+np.savetxt('WR_NonRelated_30pcs_embedding.txt', embedding, '%6.2f')
+```
+
+
+### Visualizing the embeddings from UMAP
+
+Retrieve the output from UMAP
+```{r}
+# get embedding from umap
+embeddings = read.table ("WR_NonRelated_30pcs_embedding.txt", h=F)
+colnames(embeddings) = c('E1', 'E2')
+
+emb = cbind(embeddings, MD_unrelated)
+```
+
+Visualize the 2-dimensional embeddings
+```{r}
+ggplot(emb, aes(E1, E2)) + 
+  geom_point(aes(colour=emb$time_window, shape=emb$country), alpha=.7, size=2) + 
+  
+  # assign colors and shapes
+  scale_colour_manual(values=c("gold2", "darkorange", "royalblue4", "steelblue2")) +
+  scale_shape_manual(values=c(7, 16, 10, 17, 18, 15, 9, 8)) +
+  
+  xlab('UMAP1') + ylab('UMAP2') +
+  theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), 
+        axis.text.y = element_text(colour='black'), 
+        strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), 
+        legend.key.size=unit(.3, 'cm'), legend.text=element_text(size=6),
+        axis.title=element_text(size=6))
+```
+
+
+
+## Admixture analysis with output from ngsAdmix v 32 plot with pong
+
+```{bash echo=TRUE}
+#pong -m nonRelatedFilemap -i nonRelated_ind2pop_samples.txt -n nonRelated_poporder_final_newids.txt -l colourpalette_k6.txt
+```
+
