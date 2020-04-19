@@ -1,0 +1,300 @@
+---
+title: "WR depth per scaffold"
+author: "Fátima S. Barreiro"
+date: "April 19, 2020"
+output: html_document
+---
+
+
+Load required libraries
+```{r}
+library(ggplot2)
+library(scales)
+library(reshape2)
+library(sweep)
+library(cowplot)
+```
+
+### Choice of scaffolds from the reference assembly based on size
+
+```{r}
+# read in scaffold info
+fai = read.table("cerSim1.fasta.fai")
+scaffolds = as.data.frame(fai[,1:2])
+
+# sort scaffolds by size
+ordered_scaffolds = scaffolds[order(scaffolds$V2),]
+
+# calculate cumulative sum of scaffold sizes 
+ordered_scaffolds[, 3] <- cumsum(as.numeric(ordered_scaffolds[, 2]))
+
+# total length of assembly
+tail(ordered_scaffolds$V3, 1)
+```
+
+
+```{r}
+Y = ggplot(ordered_scaffolds, aes(V2, V3))
+Y = Y + geom_point(colour="royalblue4", size=1, alpha=.8) + theme_bw()
+Y = Y + geom_vline(xintercept=1.3e7, colour="darkorange") 
+Y = Y + scale_x_continuous(limits=c(0, 1.2e8), breaks=seq(0, 1.4e8, 2e7))
+Y = Y + xlab("Scaffold size (bp)") + ylab("Cumulative sum of scaffold length (bp)")
+Y = Y + theme(axis.text=element_text(size=6), axis.title=element_text(size=8))
+
+Y
+```
+
+
+
+
+######################################################################
+
+### Test of depth to identify scaffolds from sex chromosomes among the n = 66 > 13 Mbp
+
+Read in files
+```{r}
+# retrieve files
+Depthfiles66 <- read.table('WR_56I_13Mb.Depth', header=F)
+```
+
+```{r}
+# initialize empty dataframe to collect the data and the new columns
+B = NULL
+```
+
+Expand the data frame with the pertinent calculations
+```{r}
+for (i in levels(Depthfiles66$V5)) {
+  
+  # read in files
+  b <- Depthfiles66[Depthfiles66$V5 == i, ]
+  colnames(b) = c("Scaffold", "InitialPosition", "EndPosition", "DepthCounts", "Sample")
+  
+  # compute total depth of coverage per individual
+  TotalDepthInd = sum(as.numeric(b[,4]))
+  
+  # calculate the total length of the scaffolds under consideration
+  totLen = sum(as.numeric(b[,3]))
+  
+  # compute average depth of coverage per individual
+  b$AveDepthInd = TotalDepthInd/totLen
+
+  # compute average depth of coverage per scaffold
+  b$AveScaffoldDepth = b$DepthCounts/b$EndPosition
+  
+  # Calculate the normalised depth per scaffold by dividing scaffold depth by total depth
+  b$NormScaffoldDepth = b$AveScaffoldDepth / b$AveDepthInd
+
+  # store all these subtables into a full data frame
+  B <- rbind(B, b)
+}
+
+head(B)
+```
+
+
+
+Visualize the normalized depths across scaffolds and per sample
+```{r}
+Z = ggplot(B[B$Sample != 'mwr_TG0457' & B$Sample != 'mwr_TG0459' & B$Sample != 'mwr_TG0464' & B$Sample != 'mwr_TGF08', ], aes(Scaffold, NormScaffoldDepth, colour=Sample)) +  geom_point(size=1, alpha=.6) + theme_bw() + guides(colour=F)
+  
+Z = Z + theme(axis.text.x=element_text(angle=90, size=5), axis.text.y=element_text(size=8), axis.title=element_text(size=8))
+Z = Z + scale_y_continuous(limits=c(0,2))
+Z = Z + ylab("Normalised depth of coverage")
+
+Z
+```
+
+
+
+### Save scaffold-related plots as a supplementary figure
+
+```{r}
+pdf('WR_v3_FigS2_scfs_v1.pdf', height=5, width=5, useDingbats = F)
+plot_grid(Y, Z, nrow=2, ncol=1, labels=c('A', 'B'), label_size = 7)
+dev.off()
+```
+
+
+
+#### Who is the weirdo that shows a depth of coverage of 0 in 19/63 scaffolds? 
+```{r}
+ggplot(B[B$Sample == 'mwr_TG0463', ], aes(Scaffold, NormScaffoldDepth, colour=Sample)) +  geom_point(size=1, alpha=.6) + theme_bw()
+```
+
+
+It's mwr_TG0463 (SD1905.3)
+
+
+##############################################################################
+
+### Depth of coverage per sample across the final chosen scaffolds (n = 63)
+
+
+Read in files
+```{r}
+# retrieve files
+Depthfiles <- read.table('WR_56I_63scfs_13Mb.Depth', header=F)
+```
+
+```{r}
+# initialize empty dataframe to collect the data and the new columns
+A = NULL
+```
+
+
+Calculate depth per individual
+```{r}
+for (i in levels(Depthfiles$V5)) {
+  
+  # read in files
+  a <- Depthfiles[Depthfiles$V5 == i, ]
+  colnames(a) = c("Scaffold", "InitialPosition", "EndPosition", "DepthCounts", "Sample")
+  
+  # compute total depth of coverage per individual
+  TotalDepthInd = sum(as.numeric(a[,4]))
+  
+  # calculate the total length of the scaffolds under consideration
+  totLen = sum(as.numeric(a[,3]))
+  
+  # compute average depth of coverage per individual
+  a$AveDepthInd = TotalDepthInd/totLen
+
+  # compute average depth of coverage per scaffold
+  a$AveScaffoldDepth = a$DepthCounts/a$EndPosition
+
+  # store all these subtables into a full data frame
+  A <- rbind(A, a)
+}
+
+head(A)
+
+```
+
+
+Plot the depth per scaffold per sample
+```{r}
+DS = ggplot(A, aes(Sample, AveScaffoldDepth, colour=Sample)) +  geom_violin(alpha=.6) + theme_bw() + guides(colour=F)
+  
+DS = DS + theme(axis.text.x=element_text(angle=90, size=3), axis.text.y=element_text(size=8), axis.title=element_text(size=8))
+#DS = DS + scale_y_continuous(limits=c(0,2))
+DS = DS + ylab("Depth of coverage")
+
+DS
+```
+
+
+
+#### Plot per group
+
+Subset the dataframe of depths into the 4 groups
+```{r}
+NWR1_names = c("mwr_TG0450", "mwr_TG0451", "mwr_TG0452", "mwr_TG0453", "mwr_TG0454", "mwr_TG0455", "mwr_TG0456", "mwr_TG0458", "mwr_TG0460", "mwr_TG0461", "mwr_TG0462", "mwr_TG0463", "mwr_TG0465", "mwr_TGF14", "mwr_TGF15", "mwr_TGF16")
+NWR1 = A[A$Sample %in% NWR1_names,]
+
+NWR2_names = c("wr_SRR5852741", "wr_SRR5852742", "wr_SRR5852743", "wr_SRR5852744", "wr_SRR5852745", "wr_SRR5852746", "wr_SRR5852747", "wr_SRR5852748", "wr_SRR5852749")
+NWR2 = A[A$Sample %in% NWR2_names,]
+
+SWR1_names = c("mwr_TG0449", "mwr_TGF01", "mwr_TGF02", "mwr_TGF03", "mwr_TGF04", "mwr_TGF05", "mwr_TGF06", "mwr_TGF07", "mwr_TGF09")
+SWR1 = A[A$Sample %in% SWR1_names,]
+
+SWR2_names = c("mwr_TGF10", "mwr_TGF11", "mwr_TGF12", "mwr_TGF13", "mwr_TGF17", "wr_P9109_102", "wr_P9109_103", "wr_P9109_104", "wr_P9109_105", "wr_P9109_106", "wr_P9109_107", "wr_P9109_108", "wr_P9109_109", "wr_P9109_110", "wr_SRR5852738", "wr_SRR5852739", "wr_SRR5852740", "wr_SRR5852750")
+SWR2 = A[A$Sample %in% SWR2_names,]
+```
+
+
+Set the new labels
+```{r}
+NWR1_newID = c('CD-un.1','CD1912.1','CD1912.2','CD1911.1','CD1913.1','CD1912.3','CD1911.2','CD-un.2','SD1905.1','SD1905.2','UG1905.1','SD1905.3','SD1905.4','SD1914.1','UG1905.2','SD1905.5')
+
+NWR2_newID = c('SD1972.1','SD1973.1','SS1954.1','SD1972.2','SD1974.1','SD1972.3','SD1963.1','UG1965.1','SD1972.4')
+  
+SWR1_newID = c('ZA1869.1','ZA1845.1','un1856.1','ZA-un.1','ZA1845.2','NA1856.1','NA1845.1','NA1857.1','ZA1842.1')
+  
+SWR2_newID = c('ZA1995.1','ZA2009.1','ZA2010.1','un2004.1','ZA1976.1','cap2009.1','cap2010.1','cap2008.1','cap2011.1','cap2011.2','cap2011.3','ZA2012.1','ZA1968.1','ZA1969.1','ZA1958.1','ZA1963.1','ZA1963.2','ZA1961.1')
+```
+
+
+
+Plot NWR1
+```{r}
+f = ggplot(NWR1, aes(Sample, AveScaffoldDepth)) + 
+  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray50", colour="gold2", alpha=.4, lwd=.3) +
+  theme_bw() +
+  scale_x_discrete(labels=as.character(NWR1_newID)) +
+  scale_y_continuous(limits=c(0, 25)) +
+  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.3, colour="gray10") +
+  theme_bw() + 
+  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=4, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10'), panel.grid.major.y = element_line(size=.1, colour='gray70')) +
+  labs(x=NULL, y="Depth of coverage")
+
+```
+
+
+Plot NWR2
+```{r}
+g = ggplot(NWR2, aes(Sample, AveScaffoldDepth)) + 
+  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray50", colour="darkorange", alpha=.4, lwd=.3) +
+  scale_x_discrete(labels=as.character(NWR2_newID)) +
+  scale_y_continuous(limits=c(0, 25)) +
+  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.3, colour="gray10") +
+  theme_bw() + 
+  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=4, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10'), panel.grid.major.y = element_line(size=.1, colour='gray70')) +
+  labs(x=NULL, y="Depth of coverage")
+
+```
+
+Plot SWR1
+```{r}
+h = ggplot(SWR1, aes(Sample, AveScaffoldDepth)) + 
+  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray50", colour="royalblue4", alpha=.4, lwd=.3) +
+  theme_bw() +
+  scale_x_discrete(labels=as.character(SWR1_newID)) +
+  scale_y_continuous(limits=c(0, 25)) +
+  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.3, colour="gray10") +
+  theme_bw() + 
+  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=4, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10'), panel.grid.major.y = element_line(size=.1, colour='gray70')) +
+  labs(x=NULL, y="Depth of coverage")
+
+```
+
+Plot SWR2
+```{r}
+i = ggplot(SWR2, aes(Sample, AveScaffoldDepth)) + 
+  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray50", colour="steelblue3", alpha=.4, lwd=.3) +
+  theme_bw() +
+  scale_x_discrete(labels=as.character(SWR2_newID)) +
+  scale_y_continuous(limits=c(0, 25)) +
+  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.3, colour="gray10") +
+  theme_bw() + 
+  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=4, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10'), panel.grid.major.y = element_line(size=.1, colour='gray70')) +
+  labs(x=NULL, y="Depth of coverage")
+
+```
+
+
+```{r}
+J = plot_grid(f, g, h, i, nrow=2, ncol=2, labels=c('A', 'B', 'C', 'D'), label_size = 7)
+J
+```
+
+
+```{r}
+pdf('WR_v3_FigS2_depths_v1.pdf', height=4, width=5, useDingbats = F)
+J
+dev.off()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
