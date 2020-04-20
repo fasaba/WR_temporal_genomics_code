@@ -1,5 +1,5 @@
 ---
-title: "WR_structure_figures"
+title: "WR structure figures"
 author: "Fátima S. Barreiro"
 date: "February 16, 2020"
 output: html_document
@@ -19,6 +19,7 @@ library(tidyverse)
 library(ggpubr)
 library(tidyr)
 library(cowplot)
+library(ggrepel)
 ```
 
 
@@ -26,7 +27,7 @@ library(cowplot)
 
 ```{r}
 # prepare metadata
-MD <- read.csv("WR_TableS1_v3.csv", h=T)
+MD <- read.csv("WR_v3_TableS1_v1.csv", h=T)
 
 MD_unrelated = MD[MD$new_ID != 'CD-un.1' & MD$new_ID != 'un1856.1' & MD$new_ID != 'ZA1842.1', ]
 ```
@@ -187,10 +188,14 @@ np.savetxt('WR_NonRelated_30pcs_embedding.txt', embedding, '%6.2f')
 
 ### Visualizing the embeddings from UMAP
 
+#### UMAP output from GLs instead of from PC data (20.4.2020)
+
+The embeddings were calculated in Computerome, the output is visualized here.
+
 Retrieve the output from UMAP
 ```{r}
 # get embedding from umap
-embeddings = read.table ("WR_NonRelated_30pcs_embedding.txt", h=F)
+embeddings = read.table ("WR.above13Mb_NoSexChr_NonMaskedRegions_nonRelated_tv.emb.txt", h=F)
 colnames(embeddings) = c('E1', 'E2')
 
 emb = cbind(embeddings, MD_unrelated)
@@ -198,22 +203,35 @@ emb = cbind(embeddings, MD_unrelated)
 
 Visualize the 2-dimensional embeddings
 ```{r}
-ggplot(emb, aes(E1, E2)) + 
-  geom_point(aes(colour=emb$time_window, shape=emb$country), alpha=.7, size=2) + 
+Ep = ggplot(emb, aes(E1, E2)) + 
+  geom_point(aes(colour=time_window, shape=country), alpha=.8, size=2.5) +
   
   # assign colors and shapes
-  scale_colour_manual(values=c("gold2", "darkorange", "royalblue4", "steelblue2")) +
-  scale_shape_manual(values=c(7, 16, 10, 17, 18, 15, 9, 8)) +
+  scale_colour_manual(values=c("gold3", "darkorange", "royalblue4", "steelblue2")) +
+  scale_shape_manual(values=c(7, 16, 10, 17, 18, 15, 9, 8))
   
-  xlab('UMAP1') + ylab('UMAP2') +
+Ep = Ep +  xlab('UMAP1') + ylab('UMAP2') +
   theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), 
         axis.text.y = element_text(colour='black'), 
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(), 
         legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), 
-        legend.key.size=unit(.3, 'cm'), legend.text=element_text(size=6),
-        axis.title=element_text(size=6))
+        legend.key.size=unit(.4, 'cm'), legend.text=element_text(size=7),
+        axis.title=element_text(size=7), axis.text=element_text(size=4))
+  
+Ep = Ep + geom_text_repel(data=subset(emb, new_ID == "ZA1845.2"), aes(label=new_ID), segment.size=.18, size=3.5, colour="gray20", ylim=c(NA, -2.5), xlim=c(NA, 20))
+
+Ep
 ```
+
+
+```{r}
+pdf('WR_v3_Fig2A_v2.pdf', height=4, width=8, useDingbats = F)
+Ep
+dev.off()
+```
+
+
 
 
 

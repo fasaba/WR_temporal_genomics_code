@@ -68,29 +68,34 @@ wilcox.test(pi_swr1, pi_swr2, paired=TRUE)
 Visualization
 ```{r}
 # plot
-pi = ggplot(pi_WR, aes(pi_WR$variable, pi_WR$value, fill=pi_WR$variable))  +
+pi = ggplot(pi_WR, aes(variable, value, fill=variable))  +
+   theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80')))
   
   # format scatter points
-  geom_jitter(aes(colour=pi_WR$variable), shape=17, position=position_jitter(0.11), cex=.7, alpha=.8) +  
-  
-  # format boxplots
-  geom_boxplot(alpha=.2, lwd=.2, fill='gray') +
-  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+pi = pi +
+    # format boxplots
+  geom_boxplot(alpha=.2, lwd=.2, fill='gray30') +
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  # add the points
+  geom_jitter(aes(colour=variable), shape=17, position=position_jitter(0.11), cex=.7, alpha=.7) +  
   
   # get summary stats and groups comparison
-  stat_compare_means(paired=TRUE, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2")), label="p.format", label.y=0.00063, size=2) +
-  stat_compare_means(paired=TRUE, method = "wilcox.test", comparisons= list(c("SWR1", "SWR2")), label="p.format", label.y=0.00042, size=2) +
+  stat_compare_means(paired=TRUE, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2")), label="p.format", label.y=0.00064, size=2.5) +
+  stat_compare_means(paired=TRUE, method = "wilcox.test", comparisons= list(c("SWR1", "SWR2")), label="p.format", label.y=0.00044, size=2.5) +
   
   # embellish
-  scale_y_continuous(limits=c(0.0001,0.00070), labels = function(x) format(x, scientific = FALSE)) +
-  labs(x=NULL, y="Nucleotide diversity at tv") + 
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5))
+  scale_y_continuous(limits=c(0.0001,0.00068), labels = function(x) format(x, scientific = FALSE)) +
+  labs(x=NULL, y="Nucleotide diversity (tv)") + 
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80'))) 
   
-
+pi
 ```
 
 ####################################################
 Missing: Pi-tv for subsampled dataset (running in computerome)
+Did not work* 
 ################################################
 
 
@@ -103,7 +108,7 @@ Missing: Pi-tv for subsampled dataset (running in computerome)
 
 Reading in file containing metadata and genomic diversity metrics 
 ```{r}
-data = read.csv("WR_TableS1_v3.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+data = read.csv("WR_v3_TableS1_v1.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 ```
 
 
@@ -138,28 +143,35 @@ Visualization
 ```{r}
 # plot het values per time window
 gw_het = ggplot(data, aes(time_window, corrected_gw_het)) + 
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80')))
   
-  # plot violin per group
-  geom_violin(alpha=.3, aes(colour=time_window, fill=time_window), lwd=.2) +
+  
+      # plot violin per group
+gw_het = gw_het +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.9) + 
+  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
   
   # add colours and filling colours
-  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
-  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
   
   # add stats and an unpaired wilcox test to compare the medians
-  stat_summary(fun.y=mean, fun.ymin = function (corrected_gw_het) mean(corrected_gw_het) - sd(corrected_gw_het), 
-               fun.ymax = function(corrected_gw_het) mean(corrected_gw_het) + sd(corrected_gw_het), geom = "pointrange" , size=.12, stroke=.4, col="black") +
-  stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
+  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
   
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00048, 0.0003), size=2) +
+  stat_summary(fun=mean, fun.min = function (corrected_gw_het) mean(corrected_gw_het) - sd(corrected_gw_het), 
+               fun.max = function(corrected_gw_het) mean(corrected_gw_het) + sd(corrected_gw_het), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00048, 0.00022), size=2.5) +
   
   # embellish
-  scale_y_continuous(limits=c(0.00003, 0.0005),labels = function(x) format(x, scientific = FALSE)) +
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5)) +
-  labs(x=NULL, y="Genome-wide heterozygosity at tv") 
+  scale_y_continuous(limits=c(0.00007, 0.0005),labels = function(x) format(x, scientific = FALSE)) +
+  
+  
+  labs(x=NULL, y="Genome-wide heterozygosity (tv)")
+
+gw_het
 ```
 
 
@@ -184,30 +196,58 @@ wilcox.test(swr1$corrected_exon_het, swr2$corrected_exon_het, paired = F)
 Visualization
 ```{r}
 exon_het = ggplot(data, aes(time_window, corrected_exon_het, fill=time_window)) + 
-  # plot violin per group
-  geom_violin(alpha=.3, aes(colour=time_window, fill=time_window), lwd=.2) +
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80')))
+
+    # plot violin per group
+exon_het = exon_het +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.9) + 
+  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
   
-  # stats for exon violin
-  stat_summary(fun.y=mean, fun.ymin = function (corrected_exon_het) mean(corrected_exon_het) - sd(corrected_exon_het), 
-               fun.ymax = function(corrected_exon_het) mean(corrected_exon_het) + sd(corrected_exon_het), geom = "pointrange" , size=.12, stroke=.4) +
-  stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
   
-  # compare medians between violins
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00036, 0.00025), size=2) +
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
   
-  # choose colours
-  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
-  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  stat_summary(fun=mean, fun.min = function (corrected_gw_het) mean(corrected_gw_het) - sd(corrected_gw_het), 
+               fun.max = function(corrected_gw_het) mean(corrected_gw_het) + sd(corrected_gw_het), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00033, 0.00022), size=2.5) +
   
   # embellish
-  scale_y_continuous(limits=c(0.00003, 0.0005), labels = function(x) format(x, scientific = FALSE)) +
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5)) +
-  labs(x=NULL, y="Exon heterozygosity at tv")
+  scale_y_continuous(limits=c(0.00004, 0.00035),labels = function(x) format(x, scientific = FALSE)) +
+  
+  
+  labs(x=NULL, y="Exon heterozygosity (tv)")
+
+exon_het
   
 ```
+
+
+#### Make genomic erosion figure (Figure 3 in WR v3)
+
+First make the panel of heterozygosities
+```{r}
+HET = plot_grid(gw_het, exon_het, nrow=1, ncol=2, labels=c('B','C'), label_size=7)
+HET
+```
+
+
+
+```{r}
+pdf('WR_v3_Fig3_v1.pdf', height=5, width=5, useDingbats = F)
+plot_grid(pi, HET, nrow=2, ncol=1, labels=c('A', NULL), label_size = 7, rel_heights = c(0.7, 1.2))
+dev.off()
+```
+
+
+
+
+#####################################################################################
 
 
 ## 3. Individual diversity metrics in subsampled dataset
@@ -253,28 +293,34 @@ Visualization
 ```{r}
 # plot het values per time window
 gw_het_ss = ggplot(data_ss, aes(time_window, corrected_gw_het)) + 
-  
-  # plot violin per group
-  geom_violin(alpha=.3, aes(colour=time_window, fill=time_window),  lwd=.2) +
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80')))
 
+    # plot violin per group
+gw_het_ss = gw_het_ss +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
+  
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.9) + 
+  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
   
   # add colours and filling colours
-  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
-  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
   
   # add stats and an unpaired wilcox test to compare the medians
-  stat_summary(fun.y=mean, fun.ymin = function (corrected_gw_het) mean(corrected_gw_het) - sd(corrected_gw_het), 
-               fun.ymax = function(corrected_gw_het) mean(corrected_gw_het) + sd(corrected_gw_het), geom = "pointrange" , size=.12, stroke=.4, col="black") +
-  stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
+  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
   
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00022, 0.00019), size=1.8) +
+  stat_summary(fun=mean, fun.min = function (corrected_gw_het) mean(corrected_gw_het) - sd(corrected_gw_het), 
+               fun.max = function(corrected_gw_het) mean(corrected_gw_het) + sd(corrected_gw_het), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00023, 0.00022), size=2.5) +
   
   # embellish
-  scale_y_continuous(limits=c(0.00003, 0.00025),labels = function(x) format(x, scientific = FALSE)) +
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=6)) +
-  labs(x=NULL, y="Genome-wide heterozygosity at tv") 
+  scale_y_continuous(limits=c(0.00008, 0.00025),labels = function(x) format(x, scientific = FALSE)) +
+  
+  
+  labs(x=NULL, y="Genome-wide heterozygosity (tv)")
+
+gw_het_ss
 ```
 
 
@@ -298,31 +344,47 @@ wilcox.test(swr1_ss$corrected_exon_het, swr2_ss$corrected_exon_het, paired = F)
 Visualization
 ```{r}
 exon_het_ss = ggplot(data_ss, aes(time_window, corrected_exon_het, fill=time_window)) + 
-  
-  # plot violin per group
-  geom_violin(alpha=.3, aes(colour=time_window, fill=time_window),  lwd=.2) +
+    theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80')))
 
+    # plot violin per group
+exon_het_ss = exon_het_ss +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
+  
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.9) + 
+  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
   
-  # stats for exon violin
-  stat_summary(fun.y=mean, fun.ymin = function (corrected_exon_het) mean(corrected_exon_het) - sd(corrected_exon_het), 
-               fun.ymax = function(corrected_exon_het) mean(corrected_exon_het) + sd(corrected_exon_het), geom = "pointrange" , size=.12, stroke=.4) +
-  stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
   
-  # compare medians between violins
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00016, 0.00015), size=1.8) +
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
   
-  # choose colours
-  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
-  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  stat_summary(fun=mean, fun.min = function (corrected_gw_het) mean(corrected_gw_het) - sd(corrected_gw_het), 
+               fun.max = function(corrected_gw_het) mean(corrected_gw_het) + sd(corrected_gw_het), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00014, 0.00014), size=2.5) +
   
   # embellish
-  scale_y_continuous(limits=c(0.00003, 0.00025), labels = function(x) format(x, scientific = FALSE)) +
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=6)) +
-  labs(x=NULL, y="Exon heterozygosity at tv")
+  scale_y_continuous(limits=c(0.00005, 0.00015),labels = function(x) format(x, scientific = FALSE)) +
   
+  
+  labs(x=NULL, y="Exon heterozygosity (tv)")
+
+exon_het_ss
 ```
+
+
+
+#### Make Figure on individual genomic erosion for supplementary 
+```{r}
+pdf('WR_v3_FigS8.pdf', height=4, width=5, useDingbats = F)
+plot_grid(gw_het_ss, exon_het_ss, nrow=1, ncol=2, labels=c('A','B'), label_size=7)
+dev.off()
+```
+
+
+
 
 
 ######################################### Hetwindows, RoH length and FRoH #####################################################
@@ -492,13 +554,13 @@ roh_len_info_filt_above1Mb = roh_len_info_filt[roh_len_info_filt$value > 1000000
 Calculate summary statistics for RoH length to include in plots for both the entire sample set and without the 3 outliers
 ```{r}
 # stats for all samples
-group = roh_len_info_above1Mb %>%
+group = roh_len_info_above1Mb %>% filter(!is.na(time_window)) %>% 
   group_by(time_window) %>%
   summarize(min=round((min(value)/1000000), digits=2), max=round((max(value)/1000000), digits=2), 
             mean=round((mean(value)/1000000), digits=2))
 
 # stats for filtered samples (-3 outliers)
-group_filt = roh_len_info_filt_above1Mb %>%
+group_filt = roh_len_info_filt_above1Mb %>% filter(!is.na(time_window)) %>% 
   group_by(time_window) %>%
   summarize(min=round((min(value)/1000000), digits=2), max=round((max(value)/1000000), digits=2), 
             mean=round((mean(value)/1000000), digits=2))
@@ -506,6 +568,72 @@ group_filt = roh_len_info_filt_above1Mb %>%
 ```
 
 
+### Distribution of RoH length per group
+
+Visualize the distribution of RoH length per group for the total dataset (minus outliers)
+```{r}
+# remove extra NA category mysteriously created by R
+roh_len_all = filter(roh_len_info_filt_above1Mb, !is.na(time_window)) %>% 
+  
+  # plot violins
+  ggplot(aes(time_window, value)) +
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80'))) +
+  
+geom_violin(aes(time_window, value, colour=time_window, fill=time_window), alpha=.3, lwd=.4) +
+
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats
+  stat_summary(fun=mean, size=0.14, fun.min = function (value) mean(value) - sd(value), fun.max = function(value) mean(value) + sd(value), geom = "pointrange", stroke=.5) +
+  
+  # embellish
+  scale_y_continuous(limits=c(0, 42e6), breaks=c(1.5e6, 10e6, 20e6, 30e6, 40e6), labels=c(1.5, 10, 20, 30, 40)) +
+  
+  labs(x=NULL, y="RoH length (Mbp)")
+
+roh_len_all
+```
+
+
+
+Visualize the distribution of RoH length per group for the subsampled dataset (minus outliers)
+```{r}
+# remove extra NA category mysteriously created by R
+roh_len_ss = filter(roh_len_info_filt_above1Mb_ss, !is.na(time_window)) %>% 
+  
+  # plot violins
+  ggplot(aes(time_window, value)) +
+
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80'))) +
+  
+  geom_violin(aes(time_window, value, colour=time_window, fill=time_window), alpha=.3, lwd=.4) +
+
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats
+  stat_summary(fun=mean, size=0.14, fun.min = function (value) mean(value) - sd(value), fun.max = function(value) mean(value) + sd(value), geom = "pointrange", stroke=.5) +
+  
+  
+  # embellish
+  scale_y_continuous(limits=c(0, 42e6), breaks=c(1.5e6, 10e6, 20e6, 30e6, 40e6), labels=c(1.5, 10, 20, 30, 40)) +
+  labs(x=NULL, y="RoH length (Mbp)")
+
+
+roh_len_ss
+
+```
+
+
+
+
+
+#### Calculating Froh
 
 Calculate FRoH as an estimate of inbreeding by dividing total length falling in RoH by the total genomic length scanned for each sample
 ```{r}
@@ -538,7 +666,7 @@ Froh_f_filt = Froh_f[Froh_f$new_ID != 'CD-un.1' & Froh_f$new_ID != 'CD1911.2' & 
 
 Get summary statistics for Froh across groups for both the unfiltered and filtered sample sets
 ```{r}
-Froh_f %>%
+Froh_f %>% 
   group_by(time_window) %>%
   summarize(min=min(froh, na.rm = TRUE), max=max(froh, na.rm = TRUE), median = median(froh, na.rm = TRUE))
 
@@ -588,58 +716,55 @@ wilcox.test(swr1$froh, swr2$froh, paired = F)
 ```
 
 
-Visualize Froh across groups
+
+#### Visualizing Froh
+
 ```{r}
-# plot violins per group with stats for unfiltered sample set
-ggplot(Froh_f, aes(time_window, froh, fill=time_window)) +
-  geom_violin(alpha=.3, aes(colour=time_window), lwd=.2) +
-  
-  # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=1, alpha=.9) + 
-  
-  # add colours and filling colours
-  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
-  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
-  
-  # add stats
-  stat_summary(fun.y=mean, size=0.14, fun.ymin = function (froh) mean(froh) - sd(froh), 
-               fun.ymax = function(froh) mean(froh) + sd(froh), geom = "pointrange", stroke=.5) +
-  stat_summary(fun.y=median, size=1.8, geom="point", col="black", shape=2) +
-  
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), 
-                     label.y=c(0.41, 0.53), size=3) +
-  
-  # embellish
-  scale_y_continuous(limits=c(0, 0.6), labels = function(x) format(x, scientific = FALSE)) +
-  theme_bw() + theme(legend.position = "none", axis.title=element_text(size=7), axis.text=element_text(size=7)) +
-  labs(x="Time window", y="F-RoH")
+fmt_dcimals <- function(decimals=0){
+    function(x) format(x,nsmall = decimals,scientific = FALSE)
+}
+```
 
-
+Plot Froh across groups after removing the 3 outliers
+```{r}
 ###
-# plot violins per group with stats for filtered sample set
-froh_plot = ggplot(Froh_f_filt, aes(time_window, froh, fill=time_window)) +
-  geom_violin(alpha=.3, aes(colour=time_window), lwd=.2) +
+# plot violins per group with stats for filtered sample set but not subsampled
+froh_all = ggplot(Froh_f_filt, aes(time_window, froh)) +
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80')))
+
+
+froh_all = froh_all +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=1, alpha=.9) + 
+  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
   
   # add colours and filling colours
-  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
-  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
   
-  # add stats
-  stat_summary(fun.y=mean, size=0.14, fun.ymin = function (froh) mean(froh) - sd(froh), 
-               fun.ymax = function(froh) mean(froh) + sd(froh), geom = "pointrange", stroke=.5) +
-  stat_summary(fun.y=median, shape=2, size=1, geom="point", col="black") +
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
   
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), 
-                     label.y=c(0.41, 0.53), size=2) +
+  stat_summary(fun=mean, fun.min = function (corrected_gw_het) mean(corrected_gw_het) - sd(corrected_gw_het), 
+               fun.max = function(corrected_gw_het) mean(corrected_gw_het) + sd(corrected_gw_het), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.4, 0.5), size=2.5) +
   
   # embellish
-  scale_y_continuous(limits=c(0, 0.6), labels = function(x) format(x, scientific = FALSE)) +
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=5)) +
+  scale_y_continuous(limits=c(0.1, 0.53),labels = function(x) format(x, scientific = FALSE)) +
+  
   labs(x=NULL, y="FRoH")
 
+froh_all
+```
+
+
+##### Make RoH len and Froh figure for main text (Figure 4 in WR v3)
+```{r}
+pdf('WR_v3_Fig4_v1.pdf', height=4, width=5, useDingbats = F)
+plot_grid(roh_len_all, froh_all, nrow=1, ncol=2, labels=c('A','B'), label_size=7)
+dev.off()
 ```
 
 
@@ -659,7 +784,7 @@ roh_len_info_filt_above1Mb_ss = subset(roh_len_info_filt_above1Mb, country != 'D
 
 Calculate summary statistics for RoH length to include in plots for both the entire sample set and without the 3 outliers
 ```{r}
-group_filt_ss = roh_len_info_filt_above1Mb_ss %>%
+group_filt_ss = roh_len_info_filt_above1Mb_ss %>% filter(!is.na(time_window)) %>% 
   group_by(time_window) %>%
   summarize(min=round((min(value)/1000000), digits=2), max=round((max(value)/1000000), digits=2), 
             mean=round((mean(value)/1000000), digits=2))
@@ -697,40 +822,59 @@ wilcox.test(swr1$froh, swr2$froh, paired = F)
 
 Visualize Froh across groups
 ```{r}
-# plot violins per group with stats for filtered sample set
-froh_plot_ss = ggplot(Froh_f_filt_ss, aes(time_window, froh, fill=time_window)) +
-  geom_violin(alpha=.3, aes(colour=time_window), lwd=.2) +
+###
+# plot violins per group with stats for filtered sample set but not subsampled
+froh_ss = ggplot(Froh_f_filt_ss, aes(time_window, froh)) +
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80')))
+
+
+froh_ss = froh_ss +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=16, position=position_jitter(0.11), cex=.6, alpha=.9) + 
+  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
   
   # add colours and filling colours
-  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
-  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
   
-  # add stats
-  stat_summary(fun.y=mean, size=0.14, fun.ymin = function (froh) mean(froh) - sd(froh), 
-               fun.ymax = function(froh) mean(froh) + sd(froh), geom = "pointrange", stroke=.5) +
-  stat_summary(fun.y=median, geom="point", col="black", shape=2, size=1) +
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
   
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), 
-                     label.y=c(0.36, 0.53), size=1.8) +
+  stat_summary(fun=mean, fun.min = function (corrected_gw_het) mean(corrected_gw_het) - sd(corrected_gw_het), 
+               fun.max = function(corrected_gw_het) mean(corrected_gw_het) + sd(corrected_gw_het), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.4, 0.5), size=2.5) +
   
   # embellish
-  scale_y_continuous(limits=c(0, 0.6), labels = function(x) format(x, scientific = FALSE)) +
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(size=6), axis.title.y=element_text(size=6), axis.text.y=element_text(size=6)) +
+  scale_y_continuous(limits=c(0.1, 0.53),labels = function(x) format(x, scientific = FALSE)) +
+  
   labs(x=NULL, y="FRoH")
+
+froh_ss
 ```
 
 
 
-# Figures
 
-## Making Figure 2
+##### Make RoH len and Froh figure for supplementary (Figure S9 in WR v3)
+```{r}
+pdf('WR_v3_FigS9_v1.pdf', height=4, width=5, useDingbats = F)
+plot_grid(roh_len_ss, froh_ss, nrow=1, ncol=2, labels=c('A','B'), label_size=7)
+dev.off()
+```
+
+
+
+#########################################################################################################
+
+# Figures in WR v2
+
+## Making Figure on genomic erosion for main text
 Combine plots for Figure 2 in one page
 ```{r eval=FALSE, include=FALSE}
-pdf('WR_v2_Fig2_v1.pdf', height=5, useDingbats=F)
-plot_grid(pi, gw_het, exon_het, froh_plot, labels=c('A','B','C','D'), label_size=9, nrow=2 , ncol=2)
+pdf('WR_v2_Fig2_v1.pdf', height=4.5, width=5, useDingbats=F)
+plot_grid(pi, gw_het, exon_het, froh_plot, labels=c('A','B','C','D'), label_size=7, nrow=2 , ncol=2)
 dev.off()
 ```
 
@@ -743,11 +887,7 @@ plot_grid(gw_het_ss, exon_het_ss, froh_plot_ss, labels=c('A','B','C'), label_siz
 dev.off()
 ```
 
-
-
-## Making Figure S3
-
-
+## Making Figure S3 in WR v2 or S7 in WR v3
 ### Distribution of local estimates of heterozygosity per sample
 
 Visualize the distribution of local estimates of heterozygosity per sample across windows in order to determine the threshold of heterozygosity below which long stretches will be flagged as RoH
@@ -757,10 +897,10 @@ A = ggplot(NWR1, aes(variable, value, colour=variable)) +
   # ggplot(aes(new_ID, value)) +
   geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
   theme_bw() +
-  scale_y_continuous(limits=c(0, 1e-3)) +
+  scale_y_continuous(limits=c(0, 3e-3)) +
   geom_hline(yintercept=5e-5, color="grey20", linetype="dashed", size=.4) +
   theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1), axis.text.y=element_text(size=5)) +
+  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1, colour='gray10'), axis.text.y=element_text(size=5, colour='gray10')) +
   labs(x=NULL, y="Heterozygosity per 1Mbp window")
 
 B = ggplot(NWR2, aes(variable, value, colour=variable)) + 
@@ -769,9 +909,9 @@ B = ggplot(NWR2, aes(variable, value, colour=variable)) +
   geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
   geom_hline(yintercept=5e-5, color="grey20", linetype="dashed", size=.4) +
   theme_bw() +
-  scale_y_continuous(limits=c(0, 1e-3)) +
+  scale_y_continuous(limits=c(0, 3e-3)) +
   theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1), axis.text.y=element_text(size=5)) +
+  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1, colour='gray10'), axis.text.y=element_text(size=5, colour='gray10')) +
   labs(x=NULL, y="Heterozygosity per 1Mbp window")
 
 C = ggplot(SWR1, aes(variable, value, colour=variable)) + 
@@ -780,9 +920,9 @@ C = ggplot(SWR1, aes(variable, value, colour=variable)) +
   geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
    geom_hline(yintercept=5e-5, color="grey20", linetype="dashed", size=.4) +
   theme_bw() +
-  scale_y_continuous(limits=c(0, 1e-3)) +
+  scale_y_continuous(limits=c(0, 3e-3)) +
   theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1), axis.text.y=element_text(size=5)) +
+  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1, colour='gray10'), axis.text.y=element_text(size=5, colour='gray10')) +
   labs(x=NULL, y="Heterozygosity per 1Mbp window")
 
 D = ggplot(SWR2, aes(variable, value, colour=variable)) + 
@@ -791,14 +931,20 @@ D = ggplot(SWR2, aes(variable, value, colour=variable)) +
   geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
   geom_hline(yintercept=5e-5, color="grey20", linetype="dashed", size=.4) +
   theme_bw() +
-  scale_y_continuous(limits=c(0, 1e-3)) + 
+  scale_y_continuous(limits=c(0, 3e-3)) + 
   theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1), axis.text.y=element_text(size=5)) +
+  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1, colour='gray10'), axis.text.y=element_text(size=5, colour='gray10')) +
   labs(x=NULL, y="Heterozygosity per 1Mbp window")
 
 
 ```
 
+##### Save individual distribution of local het as Figure S7 in WR v3
+```{r}
+pdf('WR_v3_FigS7_v1.pdf', height=5, width=6, useDingbats = F)
+plot_grid(A, B, C, D, labels=c("A", "B", "C", "D"), label_size=7, ncol = 2, nrow = 2)
+dev.off()
+```
 
 
 ### Distribution of RoH length per group
