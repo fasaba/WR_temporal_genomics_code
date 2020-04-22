@@ -81,49 +81,61 @@ SWR2 = df[df$oldID %in% SWR2_names,]
 Visualize the distribution of local estimates of heterozygosity per sample across windows in order to determine the threshold of heterozygosity below which long stretches will be flagged as RoH
 ```{r}
 A = ggplot(NWR1, aes(variable, value, colour=variable)) + 
+    theme_bw() + 
+  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10')) +
+  
   geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
-  theme_bw() +
-  scale_y_continuous(limits=c(0, 3e-3)) +
+  scale_y_continuous(limits=c(0, 2.5e-3)) +
   geom_hline(yintercept=5e-5, color="grey20", linetype="dashed", size=.4) +
-  theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1, colour='gray10'), axis.text.y=element_text(size=5, colour='gray10')) +
   labs(x=NULL, y="Heterozygosity per 1Mbp window")
 
 B = ggplot(NWR2, aes(variable, value, colour=variable)) + 
-  geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
-  geom_hline(yintercept=5e-5, color="grey20", linetype="dashed", size=.4) +
-  theme_bw() +
-  scale_y_continuous(limits=c(0, 3e-3)) +
   theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1, colour='gray10'), axis.text.y=element_text(size=5, colour='gray10')) +
+  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10')) +
+  
+  geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
+  scale_y_continuous(limits=c(0, 2.5e-3)) +
+  geom_hline(yintercept=5e-5, color="grey20", linetype="dashed", size=.4) +
   labs(x=NULL, y="Heterozygosity per 1Mbp window")
+
 
 C = ggplot(SWR1, aes(variable, value, colour=variable)) + 
+   theme_bw() + 
+  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10')) +
+  
   geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
-   geom_hline(yintercept=5e-5, color="grey20", linetype="dashed", size=.4) +
-  theme_bw() +
-  scale_y_continuous(limits=c(0, 3e-3)) +
-  theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1, colour='gray10'), axis.text.y=element_text(size=5, colour='gray10')) +
+  scale_y_continuous(limits=c(0, 2.5e-3)) +
+  geom_hline(yintercept=5e-5, color="grey20", linetype="dashed", size=.4) +
   labs(x=NULL, y="Heterozygosity per 1Mbp window")
 
+
 D = ggplot(SWR2, aes(variable, value, colour=variable)) + 
+ theme_bw() + 
+  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10')) +
+  
   geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
+  scale_y_continuous(limits=c(0, 2.5e-3)) +
   geom_hline(yintercept=5e-5, color="grey20", linetype="dashed", size=.4) +
-  theme_bw() +
-  scale_y_continuous(limits=c(0, 3e-3)) + 
-  theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=5), axis.text.x=element_text(size=4, angle=20, hjust=1, colour='gray10'), axis.text.y=element_text(size=5, colour='gray10')) +
   labs(x=NULL, y="Heterozygosity per 1Mbp window")
+
 
 
 ```
 
 
+```{r}
+p1 = plot_grid(A, B, nrow=1, ncol=2, labels=c('A','B'), label_size=7, rel_widths = c(1.6,1))
+p2 = plot_grid(C, D, nrow=1, ncol=2, labels=c('C','D'), label_size=7, rel_widths = c(1,1.6))
+p1
+p2
+```
+
+
+
 Save individual distribution of local het as Figure S7 in WR v3
 ```{r}
-# pdf('WR_v3_FigS7_v1.pdf', height=5, width=6, useDingbats = F)
-# plot_grid(A, B, C, D, labels=c("A", "B", "C", "D"), label_size=7, ncol = 2, nrow = 2)
+# pdf('WR_v3_FigS7_v2.pdf', height=5, width=6, useDingbats = F)
+# plot_grid(p1, p2, ncol=1, nrow = 2)
 # dev.off()
 ```
 

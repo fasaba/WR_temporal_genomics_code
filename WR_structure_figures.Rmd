@@ -60,60 +60,92 @@ evec23 <- cbind(pcs23, MD_unrelated)
 Visualize PCs with legend per subspecies, time window and country of origin
 ```{r}
 ## PC1 vs PC2
-A = ggplot(evec12, aes(x=evec12$`1`, y=evec12$`2`))+
+A = ggplot(evec12, aes(x=`1`, y=`2`))+
   
   # draw intercept lines
   geom_vline(xintercept=0, colour="gray", linetype = "longdash")+
   geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
   
   # plot data points (2 legend alternatives)
-  geom_point(aes(colour=evec12$time_window, shape=evec12$Country), alpha=.7, size=2) + 
+  geom_point(aes(colour=time_window, shape=country), alpha=.7, size=2) + 
   
   # assign colors and shapes
-  scale_colour_manual(values=c("gold2", "darkorange", "royalblue4", "steelblue2")) +
+  scale_colour_manual(values=c("gold3", "darkorange", "royalblue4", "steelblue3")) +
   scale_shape_manual(values=c(7, 16, 10, 17, 18, 15, 9, 8)) +
   
   # labels, titles, background, etc.
   xlab(paste0("PC1 (", round(eval[1]*100, 2), "%)"))+
   ylab(paste0("PC2 (", round(eval[2]*100, 2), "%)"))+
+  
   theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=8), legend.text=element_text(size=7),
-        legend.key.size=unit(.3, "cm"))
+        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=8), legend.text=element_text(size=7), legend.key.size=unit(.4, "cm"))
 
 
 ## PC2 vs PC3
-B = ggplot(evec23, aes(x=evec23$`1`, y=evec23$`2`))+
+B = ggplot(evec23, aes(x=`1`, y=`2`))+
   
   # draw intercept lines
   geom_vline(xintercept=0, colour="gray", linetype = "longdash")+
   geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
   
   # plot data points with legend per time window and country
-  geom_point(aes(colour=evec23$time_window, shape=evec23$Country), alpha=.7, size=2) + 
+  geom_point(aes(colour=time_window, shape=country), alpha=.7, size=2) + 
   
   # assign colors and shapes to time windows and countries
-  scale_colour_manual(values=c("gold2", "darkorange", "royalblue4", "steelblue2")) +
+  scale_colour_manual(values=c("gold3", "darkorange", "royalblue4", "steelblue3")) +
   scale_shape_manual(values=c(7, 16, 10, 17, 18, 15, 9, 8)) +
   
   # labels, titles, background, etc.
   xlab(paste0("PC2 (", round(eval[2]*100, 2), "%)"))+
   ylab(paste0("PC3 (", round(eval[3]*100, 2), "%)"))+
+  
   theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=8), legend.text=element_text(size=7),
-        legend.key.size=unit(.3, "cm"))
+        legend.key.size=unit(.4, "cm"))
 
-
-## place both PCA plots on same panel
-plot_grid(A, B, labels=c('A', 'B'), ncol = 1, nrow = 2)
 ```
 
 
+Extract the legend
 
-## Reduction of dimensionality of PC data with UMAP
+```{r}
+legend = get_legend(B)
+as_ggplot(legend)
+```
 
-### Prep the input for UMAP
+Strip off the legend from both plots
+```{r}
+A = A + guides(colour=F, shape=F)
+B = B + guides(colour=F, shape=F)
+```
+
+Place both PCA plots on same panel
+```{r}
+## 
+PC = plot_grid(A, B, labels=c('A', 'B'), label_size = 7, ncol = 1, nrow = 2)
+PC
+```
+
+
+Save figure with the two plots and the legend
+```{r}
+pdf('WR_v3_FigS4_v1.pdf', height=5, width=5, useDingbats = F)
+plot_grid(PC, legend, nrow=1, ncol=2, rel_widths = c(2,.4))
+dev.off()
+```
+
+
+################################################################################
+
+## Reduction of dimensionality with UMAP
+
+
+
+#### UMAP from PC data
+
+##### Prep the input for UMAP
 
 ```{r}
 ## Take the first 30 PCs in the covariance matrix
@@ -186,9 +218,9 @@ np.savetxt('WR_NonRelated_30pcs_embedding.txt', embedding, '%6.2f')
 ```
 
 
-### Visualizing the embeddings from UMAP
 
-#### UMAP output from GLs instead of from PC data (20.4.2020)
+
+### UMAP output from GLs instead of from PC data (20.4.2020)
 
 The embeddings were calculated in Computerome, the output is visualized here.
 
