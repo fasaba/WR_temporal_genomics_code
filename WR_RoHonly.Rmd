@@ -82,7 +82,7 @@ Visualize the distribution of local estimates of heterozygosity per sample acros
 ```{r}
 A = ggplot(NWR1, aes(variable, value, colour=variable)) + 
     theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10')) +
+  theme(legend.position = "none", axis.title.y=element_text(size=7), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=7, colour='black')) +
   
   geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
   scale_y_continuous(limits=c(0, 2.5e-3)) +
@@ -91,7 +91,7 @@ A = ggplot(NWR1, aes(variable, value, colour=variable)) +
 
 B = ggplot(NWR2, aes(variable, value, colour=variable)) + 
   theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10')) +
+  theme(legend.position = "none", axis.title.y=element_text(size=7), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=7, colour='black')) +
   
   geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
   scale_y_continuous(limits=c(0, 2.5e-3)) +
@@ -101,7 +101,7 @@ B = ggplot(NWR2, aes(variable, value, colour=variable)) +
 
 C = ggplot(SWR1, aes(variable, value, colour=variable)) + 
    theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10')) +
+  theme(legend.position = "none", axis.title.y=element_text(size=7), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=7, colour='black')) +
   
   geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
   scale_y_continuous(limits=c(0, 2.5e-3)) +
@@ -111,7 +111,7 @@ C = ggplot(SWR1, aes(variable, value, colour=variable)) +
 
 D = ggplot(SWR2, aes(variable, value, colour=variable)) + 
  theme_bw() + 
-  theme(legend.position = "none", axis.title=element_text(size=6), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=6, colour='gray10')) +
+  theme(legend.position = "none", axis.title.y=element_text(size=7), axis.text.x=element_text(size=7, angle=40, hjust=1, colour='black'), axis.text.y=element_text(size=7, colour='black')) +
   
   geom_violin(aes(variable, value, colour=variable, fill=variable), alpha=.3, lwd=.3) +
   scale_y_continuous(limits=c(0, 2.5e-3)) +
@@ -134,7 +134,13 @@ p2
 
 Save individual distribution of local het as Figure S7 in WR v3
 ```{r}
-# pdf('WR_v3_FigS7_v2.pdf', height=5, width=6, useDingbats = F)
+pdf('WR_v3_FigS7_v3.pdf', height=5, width=6, useDingbats = F)
+plot_grid(p1, p2, ncol=1, nrow = 2)
+dev.off()
+```
+
+```{r}
+# png('WR_v3_FigS7_v2.png', height=5, width=6,  units = 'in', res = 300)
 # plot_grid(p1, p2, ncol=1, nrow = 2)
 # dev.off()
 ```
@@ -394,15 +400,15 @@ roh_len_ss = filter(roh_len_info_filt_above1Mb_ss, !is.na(time_window)) %>%
   geom_violin(mapping=aes(time_window, value, colour=time_window, fill=time_window), alpha=.3, lwd=.3) +
 
   # add colours and filling colours
-  scale_fill_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) + 
-  scale_color_manual(values= (c("gold2", "darkorange", "royalblue4", "steelblue3"))) +
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
   
   # add stats
   stat_summary(fun=mean, size=0.14, fun.min = function (value) mean(value) - sd(value), fun.max = function(value) mean(value) + sd(value), geom = "pointrange", stroke=.5) +
   
   # embellish
   scale_y_continuous(limits=c(0, 42e6), breaks=c(1.5e6, 10e6, 20e6, 30e6, 40e6), labels=c(1.5, 10, 20, 30, 40)) +
-  theme_bw() + theme(legend.position = "none", axis.title=element_text(size=5), axis.text=element_text(size=5)) +
+  theme_bw() + theme(legend.position = "none", axis.title=element_text(size=7), axis.text=element_text(size=7, colour='black')) +
   labs(x=NULL, y="RoH length (Mbp)")
 
 roh_len_ss
@@ -484,3 +490,12 @@ froh_ss
 # plot_grid(roh_len_ss, froh_ss, nrow=1, ncol=2, labels=c('A','B'), label_size=7)
 # dev.off()
 ```
+
+```{r}
+png('WR_v3_FigS9_v1.png', height=4, width=5, units = 'in', res = 300)
+plot_grid(roh_len_ss, froh_ss, nrow=1, ncol=2, labels=c('A','B'), label_size=7)
+dev.off()
+```
+
+
+

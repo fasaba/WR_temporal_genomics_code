@@ -239,11 +239,16 @@ HET
 
 
 ```{r}
-pdf('WR_v3_Fig3_v1.pdf', height=5, width=5, useDingbats = F)
+# pdf('WR_v3_Fig3_v1.pdf', height=5, width=5, useDingbats = F)
+# plot_grid(pi, HET, nrow=2, ncol=1, labels=c('A', NULL), label_size = 7, rel_heights = c(0.7, 1.2))
+# dev.off()
+```
+
+```{r}
+png('WR_v3_Fig3_v1.png', height=5, width=5, units = 'in', res = 300)
 plot_grid(pi, HET, nrow=2, ncol=1, labels=c('A', NULL), label_size = 7, rel_heights = c(0.7, 1.2))
 dev.off()
 ```
-
 
 
 
@@ -378,6 +383,16 @@ exon_het_ss
 
 #### Make Figure on individual genomic erosion for supplementary 
 ```{r}
-pdf('WR_v3_FigS8.pdf', height=4, width=5, useDingbats = F)
+# pdf('WR_v3_FigS8.pdf', height=4, width=5, useDingbats = F)
+# plot_grid(gw_het_ss, exon_het_ss, nrow=1, ncol=2, labels=c('A','B'), label_size=7)
+# dev.off()
+```
+
+```{r}
+png('WR_v3_FigS8_v2.png', height=4, width=5, units = 'in', res = 500)
 plot_grid(gw_het_ss, exon_het_ss, nrow=1, ncol=2, labels=c('A','B'), label_size=7)
 dev.off()
+```
+
+
+

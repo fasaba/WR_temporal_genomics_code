@@ -39,7 +39,7 @@ Y = Y + geom_point(colour="royalblue4", size=1, alpha=.8) + theme_bw()
 Y = Y + geom_vline(xintercept=1.3e7, colour="darkorange") 
 Y = Y + scale_x_continuous(limits=c(0, 1.2e8), breaks=seq(0, 1.4e8, 2e7))
 Y = Y + xlab("Scaffold size (bp)") + ylab("Cumulative sum of scaffold length (bp)")
-Y = Y + theme(axis.text=element_text(size=6), axis.title=element_text(size=8))
+Y = Y + theme(axis.text=element_text(size=6, colour="black"), axis.title=element_text(size=7))
 
 Y
 ```
@@ -98,7 +98,7 @@ Visualize the normalized depths across scaffolds and per sample
 ```{r}
 Z = ggplot(B[B$Sample != 'mwr_TG0457' & B$Sample != 'mwr_TG0459' & B$Sample != 'mwr_TG0464' & B$Sample != 'mwr_TGF08', ], aes(Scaffold, NormScaffoldDepth, colour=Sample)) +  geom_point(size=1, alpha=.6) + theme_bw() + guides(colour=F)
   
-Z = Z + theme(axis.text.x=element_text(angle=90, size=5), axis.text.y=element_text(size=8), axis.title=element_text(size=8))
+Z = Z + theme(axis.text.x=element_text(angle=80, hjust=1, size=5, colour='black'), axis.text.y=element_text(size=8, colour="black"), axis.title=element_text(size=7))
 Z = Z + scale_y_continuous(limits=c(0,2))
 Z = Z + ylab("Normalised depth of coverage")
 
@@ -110,11 +110,17 @@ Z
 ### Save scaffold-related plots as a supplementary figure
 
 ```{r}
-# pdf('WR_v3_FigS2_scfs_v1.pdf', height=5, width=5, useDingbats = F)
+# pdf('WR_v3_FigS1_v2.pdf', height=5, width=5, useDingbats = F)
 # plot_grid(Y, Z, nrow=2, ncol=1, labels=c('A', 'B'), label_size = 7)
 # dev.off()
 ```
 
+
+```{r}
+# png('WR_v3_FigS1_v2.png', height=5, width=5,  units = 'in', res = 300)
+# plot_grid(Y, Z, nrow=2, ncol=1, labels=c('A', 'B'), label_size = 7)
+# dev.off()
+```
 
 
 #### Who is the weirdo that shows a depth of coverage of 0 in 19/63 scaffolds? 
@@ -219,12 +225,12 @@ SWR2_newID = c('ZA1995.1','ZA2009.1','ZA2010.1','un2004.1','ZA1976.1','cap2009.1
 Plot NWR1
 ```{r}
 f = ggplot(NWR1, aes(Sample, AveScaffoldDepth)) + 
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=6, colour='black'), axis.text.y=element_text(size=6, colour="black"), axis.title.y=element_text(size=6), 
-                     panel.grid.major=(element_line(size=.12, colour='gray80'))) +
-  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray50", colour="gold3", alpha=.4, lwd=.2) +
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=7, colour='black'), axis.text.y=element_text(size=7, colour="black"), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray70'))) +
+  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray40", colour="gold3", alpha=.4, lwd=.2) +
   scale_x_discrete(labels=as.character(NWR1_newID)) +
   scale_y_continuous(limits=c(0, 25)) +
-  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="gray5") +
+  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="black") +
   labs(x=NULL, y="Depth of coverage")
 
 ```
@@ -233,12 +239,12 @@ f = ggplot(NWR1, aes(Sample, AveScaffoldDepth)) +
 Plot NWR2
 ```{r}
 g = ggplot(NWR2, aes(Sample, AveScaffoldDepth)) + 
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=6, colour='black'), axis.text.y=element_text(size=6, colour="black"), axis.title.y=element_text(size=6), 
-                     panel.grid.major=(element_line(size=.12, colour='gray80'))) +
-  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray50", colour="darkorange", alpha=.4, lwd=.2) +
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=7, colour='black'), axis.text.y=element_text(size=7, colour="black"), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray70'))) +
+  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray40", colour="darkorange", alpha=.4, lwd=.2) +
   scale_x_discrete(labels=as.character(NWR2_newID)) +
   scale_y_continuous(limits=c(0, 25)) +
-  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="gray5") +
+  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="black") +
   labs(x=NULL, y="Depth of coverage")
 
 ```
@@ -246,12 +252,12 @@ g = ggplot(NWR2, aes(Sample, AveScaffoldDepth)) +
 Plot SWR1
 ```{r}
 h = ggplot(SWR1, aes(Sample, AveScaffoldDepth)) + 
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=6, colour='black'), axis.text.y=element_text(size=6, colour="black"), axis.title.y=element_text(size=6), 
-                     panel.grid.major=(element_line(size=.12, colour='gray80'))) +
-  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray50", colour="royalblue4", alpha=.4, lwd=.2) +
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=7, colour='black'), axis.text.y=element_text(size=7, colour="black"), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray70'))) +
+  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray40", colour="royalblue4", alpha=.4, lwd=.2) +
   scale_x_discrete(labels=as.character(SWR1_newID)) +
   scale_y_continuous(limits=c(0, 25)) +
-  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="gray5") +
+  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="black") +
   labs(x=NULL, y="Depth of coverage")
 
 ```
@@ -259,12 +265,12 @@ h = ggplot(SWR1, aes(Sample, AveScaffoldDepth)) +
 Plot SWR2
 ```{r}
 i = ggplot(SWR2, aes(Sample, AveScaffoldDepth)) + 
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=6, colour='black'), axis.text.y=element_text(size=6, colour="black"), axis.title.y=element_text(size=6), 
-                     panel.grid.major=(element_line(size=.12, colour='gray80'))) +
-  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray50", colour="steelblue3", alpha=.4, lwd=.2) +
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=7, colour='black'), axis.text.y=element_text(size=7, colour="black"), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray70'))) +
+  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray40", colour="steelblue3", alpha=.4, lwd=.2) +
   scale_x_discrete(labels=as.character(SWR2_newID)) +
   scale_y_continuous(limits=c(0, 25)) +
-  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="gray5") +
+  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="black") +
   labs(x=NULL, y="Depth of coverage")
 
 ```
@@ -279,13 +285,18 @@ K
 
 
 ```{r}
-# pdf('WR_v3_FigS2_depths_v2.pdf', height=4, width=5, useDingbats = F)
-# plot_grid(J, K, nrow=2, ncol=1)
-# dev.off()
+pdf('WR_v3_FigS2_v3.pdf', height=4, width=5, useDingbats = F)
+plot_grid(J, K, nrow=2, ncol=1)
+dev.off()
 
 ```
 
 
+```{r}
+png('WR_v3_FigS2_v3.png', height=5, width=5,  units = 'in', res = 300)
+plot_grid(J, K, nrow=2, ncol=1)
+dev.off()
+```
 
 
 

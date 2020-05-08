@@ -131,11 +131,16 @@ PC
 
 Save figure with the two plots and the legend
 ```{r}
-pdf('WR_v3_FigS4_v1.pdf', height=5, width=5, useDingbats = F)
+# pdf('WR_v3_FigS4_v1.pdf', height=5, width=5, useDingbats = F)
+# plot_grid(PC, legend, nrow=1, ncol=2, rel_widths = c(2,.4))
+# dev.off()
+```
+
+```{r}
+png('WR_v3_FigS4_v1.png', height=5, width=5, units = 'in', res = 300)
 plot_grid(PC, legend, nrow=1, ncol=2, rel_widths = c(2,.4))
 dev.off()
 ```
-
 
 ################################################################################
 
@@ -248,17 +253,17 @@ Ep = Ep +  xlab('UMAP1') + ylab('UMAP2') +
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(), 
         legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), 
-        legend.key.size=unit(.4, 'cm'), legend.text=element_text(size=7),
-        axis.title=element_text(size=7), axis.text=element_text(size=4))
+        legend.key.size=unit(.5, 'cm'), legend.text=element_text(size=8),
+        axis.title=element_text(size=8), axis.text=element_text(size=6))
   
-Ep = Ep + geom_text_repel(data=subset(emb, new_ID == "ZA1845.2"), aes(label=new_ID), segment.size=.18, size=3.5, colour="gray20", ylim=c(NA, -2.5), xlim=c(NA, 20))
+Ep = Ep + geom_text_repel(data=subset(emb, new_ID == "ZA1845.2"), aes(label=new_ID), segment.size=.18, size=4, colour="gray10", ylim=c(NA, -2.5), xlim=c(NA, 20))
 
 Ep
 ```
 
 
 ```{r}
-pdf('WR_v3_Fig2A_v2.pdf', height=4, width=8, useDingbats = F)
+pdf('WR_v3_Fig2A_v3.pdf', height=5, useDingbats = F)
 Ep
 dev.off()
 ```
