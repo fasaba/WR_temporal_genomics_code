@@ -1,0 +1,167 @@
+---
+title: "WR Error Rates"
+author: "Fátima S. Barreiro"
+date: "October 8, 2020"
+output: html_document
+---
+
+Load required libraries
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(ggplot2)
+library(cowplot)
+library(ggrepel)
+library(reshape2)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+require(scales)
+library(ggpubr)
+library(tidyr)
+library(PairedData)
+library(gridExtra)
+```
+
+
+Reading in file containing metadata and genomic diversity metrics 
+```{r}
+data = read.table("wr_P9109_110best_BRout.Est.txt", header=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+Reading in file containing metadata and genomic diversity metrics 
+```{r}
+metadata = read.csv("WR_TableS1_v4.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+
+```{r}
+smalldata = data[1:52,]
+IDs = as.data.frame(metadata$lab_ID)
+colnames(IDs) = "ID"
+smalldata = cbind(smalldata, IDs)
+head(smalldata)
+```
+
+
+```{r}
+smalldataM = reshape2::melt(smalldata)
+head(smalldataM)
+```
+
+Plot
+```{r}
+E = ggplot(smalldataM, aes(ID, value, fill=variable, colour=variable)) + geom_bar(position = position_dodge(0.6), stat = "identity", width=0.4, size=0.2) + theme_bw() +
+  theme(axis.text.x=element_text(angle=80, hjust=1), legend.key.size= unit(4, "mm"), legend.title=element_blank()) +
+  ylab("Error rate") + xlab("Sample lab ID") +
+  ggtitle("Error rates per sample")
+
+E
+```
+
+
+
+```{r eval=FALSE, include=FALSE}
+pdf("WR_ErrorRates.pdf", height=5, width=9, useDingbats = F)
+E
+dev.off()
+```
+
+
+
+### Correlations between error rates and estimates of heterozygosity
+
+Parse the dataframe: add the heterozygosity estimates from the metadata
+```{r}
+head(smalldata)
+HET = metadata$gw_het_GL2_3x
+smalldataH = cbind(smalldata, HET)
+head(smalldataH)
+```
+
+
+Calculate some basic correlation coefficients between the het estimate and the error rates separately
+```{r}
+num_cols = names(smalldataH)[sapply(smalldataH, is.numeric)] #get a list of numerical columns in the dataframe
+length(num_cols)
+cor(smalldataH$HET, smalldataH[num_cols]) #calculate correlations between all numerical correlations
+```
+
+
+
+Create a function to run and visualize linear regressions
+```{r}
+
+correlate_vars = function(dataframe, het_var, error_var) {
+  plot = ggscatter(dataframe, x = het_var, y = error_var, 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson")
+  return(plot)
+  print(plot)
+}
+
+```
+
+
+Test the function with a variable
+```{r}
+correlate_vars(smalldataH, "HET", "T....C")
+correlate_vars(smalldataH, "HET", "C....T")
+correlate_vars(smalldataH, "HET", "G....A")
+correlate_vars(smalldataH, "HET", "A....G")
+correlate_vars(smalldataH, "HET", "G....T")
+correlate_vars(smalldataH, "HET", "T....G")
+correlate_vars(smalldataH, "HET", "A....T")
+correlate_vars(smalldataH, "HET", "T....A")
+correlate_vars(smalldataH, "HET", "G....C")
+correlate_vars(smalldataH, "HET", "C....G")
+correlate_vars(smalldataH, "HET", "A....C")
+correlate_vars(smalldataH, "HET", "C....A")
+
+```
+
+Significantly correlated with het:
+G-to-T
+T-to-G (marginally)
+A-to-T
+T-to-A
+A-to-C (marginally)
+C-to-A
+
+
+```{r}
+for (i in seq_along(smalldataH)){
+  if(is.numeric(i))
+    correlate_vars(smalldataH, "HET", "i")
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

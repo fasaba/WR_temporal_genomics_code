@@ -87,6 +87,21 @@ dev.off
 
 
 
+### Differences between different estimates of het across samples
+
+```{r}
+ggplot(data, aes(lab_ID)) + theme(axis.text.x=element_text(angle=80, hjust=1)) + ylab("Het estimate") +
+  geom_point(aes(lab_ID, uncorrected_gw_het), colour="red") +
+  geom_point(aes(lab_ID, corrected_gw_het), colour="pink") +
+  geom_point(aes(lab_ID, gw_het_GL2), colour="blue") +
+  geom_point(aes(lab_ID, gw_het_GL2_3x), colour="green")
+```
+
+
+
+
+
+
 
 ### Individual heterozygosity across groups
 
@@ -322,7 +337,8 @@ wilcox.test(swr1_f$gw_het_GL2, swr2$gw_het_GL2, paired = F)
 
 
 
-### Downsampling test
+
+## Downsampling tests
 
 #### Experiment 1. Medium-depth samples
 
@@ -334,11 +350,11 @@ DSdata = read.csv("GWhet_GL2_DStest.csv", h=T, fill=T, stringsAsFactors=T, fileE
 
 ```{r}
 F1 = ggplot(data=DSdata[DSdata$doc_filter == "filter",], aes(depth, het, colour=sample)) + geom_point() + geom_line() +
-  ylim(limits=c(0,6e-4)) + ggtitle("Downsampling test with a 3x minimum depth per site") +
+  ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test with a 3x minimum depth per site") +
   xlim(limits=c(0,23))
 
 F2 = ggplot(data=DSdata[DSdata$doc_filter == "no_filter",], aes(depth, het, colour=sample)) + geom_point() + geom_line() +
-  ylim(limits=c(0,6e-4)) + ggtitle("Downsampling test without filtering depth per site ") +
+  ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test without filtering depth per site ") +
   xlim(limits=c(0,23))
 
 F1
@@ -391,11 +407,11 @@ How does het change with decreasing depth of coverage for a given sample?
 
 ```{r}
 F3 = ggplot(data=DSdata2[DSdata2$doc_filter == "ds" | DSdata2$doc_filter == "original" ,], aes(depth, het, colour=sample)) + geom_point() + geom_line() +
-  ylim(limits=c(0,6e-4)) + ggtitle("Downsampling test with a 3x minimum depth per site") +
+  ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test with a 3x minimum depth per site") +
   xlim(limits=c(0,23))
 
 F4 = ggplot(data=DSdata2[DSdata2$doc_filter == "noFilter_ds" | DSdata2$doc_filter == "original",], aes(depth, het, colour=sample)) + geom_point() + geom_line() +
-  ylim(limits=c(0,6e-4)) + ggtitle("Downsampling test without filtering depth per site ") +
+  ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test without filtering depth per site ") +
   xlim(limits=c(0,23))
 
 F3
@@ -416,25 +432,37 @@ At depths <5x, filtering out sites with depth below 3x improves the het estimate
 
 
 
-### Extracting some plots to compare
 
-Het along the depths of the DS experiments for medium depth and high depth samples
+#### Experiment 0. DS with het estimates with GL1
+
+Read in data table
 ```{r}
-pdf("WR_GWhet_DStest_lowhighsamples.pdf", useDingbats = F)
-plot_grid(F1, F3, nrow=2, ncol=1)
-dev.off
+DSdata0 = read.csv("depthVShet_15xAll-serial_downsampling_het_curve.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+head(DSdata0)
+```
+
+
+
+```{r}
+F4 = ggplot(DSdata0, aes(Depth, Het, colour=Sample)) + geom_point() + geom_line() +
+  ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test using -GL1 and no depth filtering") +
+  xlim(limits=c(0,23))
+
+F4
+
 ```
 
 
 
 
+### Extracting some plots to compare
 
-
-
-
-
-
-
+Het along the depths of the DS experiments for medium depth and high depth samples
+```{r}
+pdf("WR_GWhet_DSexp_comparison.pdf", useDingbats = F)
+plot_grid(F4, F1, F3, nrow=3, ncol=1)
+dev.off
+```
 
 
 
