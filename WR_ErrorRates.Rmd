@@ -90,8 +90,8 @@ cor(smalldataH$HET, smalldataH[num_cols]) #calculate correlations between all nu
 Create a function to run and visualize linear regressions
 ```{r}
 
-correlate_vars = function(dataframe, het_var, error_var) {
-  plot = ggscatter(dataframe, x = het_var, y = error_var, 
+correlate_vars = function(dataframe, het_var, error_var, ID) {
+  plot = ggscatter(dataframe, x = het_var, y = error_var, label = ID,
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson")
   return(plot)
@@ -101,20 +101,20 @@ correlate_vars = function(dataframe, het_var, error_var) {
 ```
 
 
-Test the function with a variable
+Use the function to visualise correlation plots of every error rate with het
 ```{r}
-correlate_vars(smalldataH, "HET", "T....C")
-correlate_vars(smalldataH, "HET", "C....T")
-correlate_vars(smalldataH, "HET", "G....A")
-correlate_vars(smalldataH, "HET", "A....G")
-correlate_vars(smalldataH, "HET", "G....T")
-correlate_vars(smalldataH, "HET", "T....G")
-correlate_vars(smalldataH, "HET", "A....T")
-correlate_vars(smalldataH, "HET", "T....A")
-correlate_vars(smalldataH, "HET", "G....C")
-correlate_vars(smalldataH, "HET", "C....G")
-correlate_vars(smalldataH, "HET", "A....C")
-correlate_vars(smalldataH, "HET", "C....A")
+correlate_vars(smalldataH, "HET", "TtoC", "ID")
+correlate_vars(smalldataH, "HET", "CtoT", "ID")
+correlate_vars(smalldataH, "HET", "GtoA", "ID")
+correlate_vars(smalldataH, "HET", "AtoG", "ID")
+correlate_vars(smalldataH, "HET", "GtoT", "ID")
+correlate_vars(smalldataH, "HET", "TtoG", "ID")
+correlate_vars(smalldataH, "HET", "AtoT", "ID")
+correlate_vars(smalldataH, "HET", "TtoA", "ID")
+correlate_vars(smalldataH, "HET", "GtoC", "ID")
+correlate_vars(smalldataH, "HET", "CtoG", "ID")
+correlate_vars(smalldataH, "HET", "AtoC", "ID")
+correlate_vars(smalldataH, "HET", "CtoA", "ID")
 
 ```
 
@@ -127,23 +127,66 @@ A-to-C (marginally)
 C-to-A
 
 
+
+
+### Correct the het estimates by the error rates that significantly correlate with het (i.e. the Tv error rates)
+
+
 ```{r}
-for (i in seq_along(smalldataH)){
-  if(is.numeric(i))
-    correlate_vars(smalldataH, "HET", "i")
-}
+head(smalldataH)
 
 ```
 
 
+Calculate a composite error rate at Tv sites by summing up all error rates per row
+```{r}
+smalldataH %>% 
+  dplyr::select(GtoT, TtoG, AtoT, TtoA, AtoC, CtoA) %>% 
+  rowSums(na.rm=TRUE) -> smalldataH$ErTv
+
+head(smalldataH)
+```
+
+
+Calculate the corrected het by operating with the composite error rate and the het estimate
+```{r}
+smalldataHc = smalldataH %>% 
+  mutate(HET_corrected = HET-(HET*ErTv))
+
+head(smalldataHc)
+```
+
+Save these newly calculated values as a file
+```{r}
+write.table(smalldataHc, file="GWhet_ErTv_corrected.csv", row.names=F, col.names=T, sep=",")
+```
+
+
+Visualise the new het estimates
+
+```{r}
+tinydataHc = smalldataHc %>%
+  dplyr::select(ID, HET, HET_corrected)
+
+tinydataHc = reshape2::melt(tinydataHc)
+```
 
 
 
+```{r}
+P = ggplot(tinydataHc, aes(ID, value, colour=variable)) + geom_point() + theme_bw() +
+  theme(axis.text.x=element_text(angle=80, hjust=1), legend.title = element_blank(), legend.position = "top") +
+  scale_colour_manual(values=c("darkorange", "blue"), labels=c("gw_het_GL2_3x", "gw_het_GL2_3x_ErTvCorrected")) 
+  
+P
+```
 
 
-
-
-
+```{r}
+pdf("WR_GWhet_ErTv.pdf", height=5, width=9, useDingbats = F)
+P
+dev.off()
+```
 
 
 

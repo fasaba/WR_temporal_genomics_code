@@ -35,25 +35,17 @@ data = read.csv("WR_TableS1_v4.csv", h=T, fill=T, stringsAsFactors=T, fileEncodi
 
 ### Correlations between different estimates of heterozygosity
 
-```{r}
-#data$gw_het_GL2
-ggplot(data, aes(uncorrected_gw_het)) + geom_histogram()
-ggplot(data, aes(corrected_gw_het)) + geom_histogram()
-ggplot(data, aes(gw_het_GL2)) + geom_histogram()
-ggplot(data, aes(gw_het_GL2_3x)) + geom_histogram()
-```
-
 
 ```{r}
-C1 = ggscatter(data, x = "uncorrected_gw_het", y = "corrected_gw_het", 
+C1 = ggscatter(data, x = "gw_het_GL1_raw", y = "gw_het_GL1_corrected", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson") + ggtitle("GWhet with GL1 uncorrected vs GWhet with GL1 corrected")
 
-C2 = ggscatter(data, x = "uncorrected_gw_het", y = "gw_het_GL2", 
+C2 = ggscatter(data, x = "gw_het_GL1_raw", y = "gw_het_GL2", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson") + ggtitle("GWhet with GL1 uncorrected vs GWhet with GL2")
 
-C3 = ggscatter(data, x = "corrected_gw_het", y = "gw_het_GL2", 
+C3 = ggscatter(data, x = "gw_het_GL1_raw", y = "gw_het_GL2", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson") + ggtitle("GWhet with GL1 corrected vs GWhet with GL2")
 
@@ -61,13 +53,15 @@ C4 = ggscatter(data, x = "gw_het_GL2_3x", y = "gw_het_GL2",
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson") + ggtitle("GWhet with GL2 and 3x min VS GL2")
 
-C5 = ggscatter(data, x = "gw_het_GL2_3x", y = "uncorrected_gw_het", 
+C5 = ggscatter(data, x = "gw_het_GL2_3x", y = "gw_het_GL1_raw", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson") + ggtitle("GWhet with GL2 and 3x min VS GL1")
 
-C6 = ggscatter(data, x = "gw_het_GL2_3x", y = "corrected_gw_het", 
+C6 = ggscatter(data, x = "gw_het_GL2_3x", y = "gw_het_GL1_corrected", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson") + ggtitle("GWhet with GL2 and 3x min VS GL1-corrected")
+
+
 
 ```
 
@@ -90,20 +84,245 @@ dev.off
 ### Differences between different estimates of het across samples
 
 ```{r}
-ggplot(data, aes(lab_ID)) + theme(axis.text.x=element_text(angle=80, hjust=1)) + ylab("Het estimate") +
-  geom_point(aes(lab_ID, uncorrected_gw_het), colour="red") +
-  geom_point(aes(lab_ID, corrected_gw_het), colour="pink") +
-  geom_point(aes(lab_ID, gw_het_GL2), colour="blue") +
-  geom_point(aes(lab_ID, gw_het_GL2_3x), colour="green")
+dataH = data[, c("lab_ID", "gw_het_GL1_raw", "gw_het_GL1_corrected", "gw_het_GL2", "gw_het_GL2_3x", "gw_het_GL2_5x", "gw_het_GL2_3x_ErTv" )]
+dataM = reshape2::melt(dataH, id.vars=c("lab_ID"))
+head(dataM)
+```
+
+```{r}
+Hs = ggplot(dataM, aes(lab_ID, value, colour=variable, shape=variable)) + geom_point() + theme_bw() +
+  theme(axis.text.x=element_text(angle=80, hjust=1), legend.position = "top", legend.title=element_blank()) + 
+  guides(colour=guide_legend(ncol=2)) +
+  ylab("Het estimate")
+
+Hs
+```
+
+```{r}
+pdf("WR_GWhet_estimates.pdf", height=5, useDingbats = F)
+Hs
+dev.off
+```
+
+
+
+### Correlations between het and depth of coverage
+
+```{r}
+D1 = ggscatter(data, x = "depth_of_coverage", y = "gw_het_GL1_raw", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson") + ggtitle("DoC vs GWhet GL1 uncorrected")
+
+D2 = ggscatter(data, x = "depth_of_coverage", y = "gw_het_GL1_corrected", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson") + ggtitle("DoC vs GWhet GL1 corrected")
+
+D3 = ggscatter(data, x = "depth_of_coverage", y = "gw_het_GL2", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson") + ggtitle("DoC vs GWhet GL2")
+
+D4 = ggscatter(data, x = "depth_of_coverage", y = "gw_het_GL2_3x", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson") + ggtitle("DoC vs GWhet GL2-3x minDoC")
+
+D5 = ggscatter(data, x = "depth_of_coverage", y = "gw_het_GL2_5x", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson") + ggtitle("DoC vs GWhet GL2-5x minDoC")
+
+
+```
+
+
+```{r}
+D1
+D2
+D3
+D4
+D5
+```
+
+
+```{r}
+pdf("WR_HetVsDoc.pdf", height=8, width=9, useDingbats = F)
+plot_grid(D1, D2, D3, D4, D5, nrow=3, ncol=2, labels=c('A','B','C','D', 'E'))
+dev.off
+```
+
+
+```{r}
+E1 = ggscatter(data, x = "X5â..CtoT_damage", y = "gw_het_GL1_raw", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson") + ggtitle("Damage vs GWhet GL1 uncorrected")
+
+E2 = ggscatter(data, x = "X5â..CtoT_damage", y = "gw_het_GL1_corrected", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson") + ggtitle("Damage vs GWhet GL1 corrected")
+
+E3 = ggscatter(data, x = "X5â..CtoT_damage", y = "gw_het_GL2", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson") + ggtitle("Damage vs GWhet GL2")
+
+E4 = ggscatter(data, x = "X5â..CtoT_damage", y = "gw_het_GL2_3x", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson") + ggtitle("Damage vs GWhet GL2-3x minDoC")
+
+E5 = ggscatter(data, x = "X5â..CtoT_damage", y = "gw_het_GL2_5x", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson") + ggtitle("Damage vs GWhet GL2-5x minDoC")
+
+```
+
+
+```{r}
+E1
+E2
+E3
+E4
+E5
+```
+
+
+
+```{r eval=FALSE, include=FALSE}
+pdf("WR_HetVsDamage.pdf", height=8, width=9, useDingbats = F)
+plot_grid(E1, E2, E3, E4, E5, nrow=3, ncol=2, labels=c('A','B','C','D', 'E'))
+dev.off
+```
+
+
+###############################################################################################################################
+
+## Downsampling tests
+
+<!-- #### Experiment 1. Medium-depth samples with GL2 with and without 3x depth filter -->
+
+<!-- Read in data table -->
+<!-- ```{r} -->
+<!-- DSdata = read.csv("GWhet_GL2_DStest.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1") -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- F1 = ggplot(data=DSdata[DSdata$doc_filter == "filter",], aes(depth, het, colour=sample)) + geom_point() + geom_line() + -->
+<!--   ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test with a 3x minimum depth per site") + -->
+<!--   xlim(limits=c(0,23)) -->
+
+<!-- F2 = ggplot(data=DSdata[DSdata$doc_filter == "no_filter",], aes(depth, het, colour=sample)) + geom_point() + geom_line() + -->
+<!--   ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test without filtering depth per site ") + -->
+<!--   xlim(limits=c(0,23)) -->
+
+<!-- F1 -->
+<!-- F2 -->
+
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- ggplot(DSdata, aes(depth, proportion_het, colour=sample)) + geom_point() + geom_line(aes(linetype=doc_filter)) -->
+<!-- ``` -->
+
+
+
+#### Experiment 2. High-depth samples with GL2 with and without 3x depth filter
+
+<!-- Read in data table -->
+<!-- ```{r} -->
+<!-- DSdata2 = read.csv("GWhet_GL2_DSexperiment2.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1") -->
+<!-- ``` -->
+
+
+<!-- How does het change with decreasing depth of coverage for a given sample? -->
+
+<!-- ```{r} -->
+<!-- F3 = ggplot(data=DSdata2[DSdata2$doc_filter == "ds" | DSdata2$doc_filter == "original" ,], aes(depth, het, colour=sample)) + geom_point() + geom_line() + -->
+<!--   ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test with a 3x minimum depth per site") + -->
+<!--   xlim(limits=c(0,23)) -->
+
+<!-- F4 = ggplot(data=DSdata2[DSdata2$doc_filter == "noFilter_ds" | DSdata2$doc_filter == "original",], aes(depth, het, colour=sample)) + geom_point() + geom_line() + -->
+<!--   ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test without filtering depth per site ") + -->
+<!--   xlim(limits=c(0,23)) -->
+
+<!-- F3 -->
+<!-- F4 -->
+
+<!-- ``` -->
+
+
+
+
+<!-- Taking the het at the original depth as a reference, here are the differences that the het estimates at decreasing depths show -->
+
+<!-- ```{r} -->
+<!-- ggplot(DSdata2, aes(depth, diff, colour=sample)) + geom_point() + geom_line(aes(linetype=doc_filter)) -->
+<!-- ``` -->
+
+At depths <5x, filtering out sites with depth below 3x improves the het estimates.
+
+
+
+#### Experiment 3. High and medium-depth samples with a 5x filter on sites
+
+<!-- Read in data table -->
+<!-- ```{r} -->
+<!-- DSdata3 = read.csv("GWhet_GL2_DSexperiment3.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1") -->
+<!-- ``` -->
+
+
+<!-- How does het change with decreasing depth of coverage for a given sample? -->
+
+<!-- ```{r} -->
+<!-- F6 = ggplot(data=DSdata3, aes(depth, het, colour=sample)) + geom_point() + geom_line(aes(linetype=depth_category)) + -->
+<!--   ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test with a 5x minimum depth per site") + -->
+<!--   xlim(limits=c(0,23)) -->
+
+<!-- F6 -->
+<!-- ``` -->
+
+
+
+
+
+### Depth versus het across the 4 downsampling experiments
+
+
+Read in data table
+```{r}
+DSdataAll = read.csv("GWhet_DSexperiments0-1-2-3.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+Set the order of the experiments for plotting
+```{r}
+DSdataAll$doc_filter <- factor(DSdataAll$doc_filter, levels=c("GL1-no_filter","GL2-no_filter","GL2-3x_filter","GL2-5x_filter"))
+```
+
+Visualise
+```{r}
+DS = ggplot(data=DSdataAll, aes(depth, het, colour=sample)) + geom_point(aes(shape=depth_category)) + geom_line() + theme_bw() +
+  ylim(limits=c(0,4e-4)) +
+  xlim(limits=c(0,23)) +
+  facet_wrap(~ doc_filter, nrow=2, ncol=2)
+
+DS
+```
+
+
+
+```{r}
+pdf("WR_GWhet_DSexp_comparison.pdf", height=7, width=9, useDingbats = F)
+DS
+dev.off
 ```
 
 
 
 
 
+######################################################################################
+
+## Temporal comparisons with the different Het estimates
 
 
-### Individual heterozygosity across groups
+#### Individual heterozygosity across groups
 
 
 ```{r}
@@ -166,85 +385,7 @@ dev.off
 
 
 
-
-### Correlations between het and depth of coverage
-
-```{r}
-D1 = ggscatter(data, x = "depth_of_coverage", y = "uncorrected_gw_het", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson") + ggtitle("DoC vs GWhet GL1 uncorrected")
-
-D2 = ggscatter(data, x = "depth_of_coverage", y = "corrected_gw_het", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson") + ggtitle("DoC vs GWhet GL1 corrected")
-
-D3 = ggscatter(data, x = "depth_of_coverage", y = "gw_het_GL2", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson") + ggtitle("DoC vs GWhet GL2")
-
-D4 = ggscatter(data, x = "depth_of_coverage", y = "gw_het_GL2_3x", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson") + ggtitle("DoC vs GWhet GL2-3x minDoC")
-
-
-```
-
-
-```{r}
-D1
-D2
-D3
-D4
-```
-
-
-```{r eval=FALSE, include=FALSE}
-pdf("WR_HetVsDoc.pdf", height=8, width=9, useDingbats = F)
-plot_grid(D1, D2, D3, D4, nrow=2, ncol=2, labels=c('A','B','C','D'))
-dev.off
-```
-
-
-```{r}
-E1 = ggscatter(data, x = "X5â..CtoT_damage", y = "uncorrected_gw_het", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson") + ggtitle("Damage vs GWhet GL1 uncorrected")
-
-E2 = ggscatter(data, x = "X5â..CtoT_damage", y = "corrected_gw_het", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson") + ggtitle("Damage vs GWhet GL1 corrected")
-
-E3 = ggscatter(data, x = "X5â..CtoT_damage", y = "gw_het_GL2", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson") + ggtitle("Damage vs GWhet GL2")
-
-E4 = ggscatter(data, x = "X5â..CtoT_damage", y = "gw_het_GL2_3x", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson") + ggtitle("Damage vs GWhet GL2-3x minDoC")
-
-
-```
-
-
-```{r}
-E1
-E2
-E3
-E4
-```
-
-
-
-```{r eval=FALSE, include=FALSE}
-pdf("WR_HetVsDamage.pdf", height=8, width=9, useDingbats = F)
-plot_grid(E1, E2, E3, E4, nrow=2, ncol=2, labels=c('A','B','C','D'))
-dev.off
-```
-
-
-
-
-### Final plots and comparisons between temporal groups
+### Het comparisons between temporal groups
 
 ```{r}
 # plot het values per time window
@@ -279,9 +420,6 @@ gw_het = gw_het +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3
 
 gw_het
 ```
-
-
-
 
 
 
@@ -338,131 +476,8 @@ wilcox.test(swr1_f$gw_het_GL2, swr2$gw_het_GL2, paired = F)
 
 
 
-## Downsampling tests
-
-#### Experiment 1. Medium-depth samples
-
-Read in data table
-```{r}
-DSdata = read.csv("GWhet_GL2_DStest.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
-```
 
 
-```{r}
-F1 = ggplot(data=DSdata[DSdata$doc_filter == "filter",], aes(depth, het, colour=sample)) + geom_point() + geom_line() +
-  ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test with a 3x minimum depth per site") +
-  xlim(limits=c(0,23))
-
-F2 = ggplot(data=DSdata[DSdata$doc_filter == "no_filter",], aes(depth, het, colour=sample)) + geom_point() + geom_line() +
-  ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test without filtering depth per site ") +
-  xlim(limits=c(0,23))
-
-F1
-F2
-
-```
-
-
-```{r}
-pdf("WR_GWhet_DStest.pdf", useDingbats = F)
-plot_grid(F1, F2, nrow=2, ncol=1)
-dev.off
-```
-
-
-
-
-```{r}
-ggplot(DSdata, aes(depth, proportion_het, colour=sample)) + geom_point() + geom_line(aes(linetype=doc_filter))
-```
-
-
-
-
-```{r}
-P = ggplot(DSdata, aes(sample, proportion_het, fill=doc_filter)) + geom_boxplot() + ggtitle("Distribution of the proportions of the original heterozygosity in downsampled sfs'")
-
-P
-
-```
-
-```{r}
-pdf("WR_GWhet_DStest_prop.pdf", useDingbats = F)
-P
-dev.off
-```
-
-
-
-
-#### Experiment 2. High-depth samples
-
-Read in data table
-```{r}
-DSdata2 = read.csv("GWhet_GL2_DSexperiment2.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
-```
-
-
-How does het change with decreasing depth of coverage for a given sample?
-
-```{r}
-F3 = ggplot(data=DSdata2[DSdata2$doc_filter == "ds" | DSdata2$doc_filter == "original" ,], aes(depth, het, colour=sample)) + geom_point() + geom_line() +
-  ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test with a 3x minimum depth per site") +
-  xlim(limits=c(0,23))
-
-F4 = ggplot(data=DSdata2[DSdata2$doc_filter == "noFilter_ds" | DSdata2$doc_filter == "original",], aes(depth, het, colour=sample)) + geom_point() + geom_line() +
-  ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test without filtering depth per site ") +
-  xlim(limits=c(0,23))
-
-F3
-F4
-
-```
-
-
-
-
-Taking the het at the original depth as a reference, here are the differences that the het estimates at decreasing depths show
-
-```{r}
-ggplot(DSdata2, aes(depth, diff, colour=sample)) + geom_point() + geom_line(aes(linetype=doc_filter))
-```
-
-At depths <5x, filtering out sites with depth below 3x improves the het estimates.
-
-
-
-
-#### Experiment 0. DS with het estimates with GL1
-
-Read in data table
-```{r}
-DSdata0 = read.csv("depthVShet_15xAll-serial_downsampling_het_curve.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
-head(DSdata0)
-```
-
-
-
-```{r}
-F4 = ggplot(DSdata0, aes(Depth, Het, colour=Sample)) + geom_point() + geom_line() +
-  ylim(limits=c(0,4e-4)) + ggtitle("Downsampling test using -GL1 and no depth filtering") +
-  xlim(limits=c(0,23))
-
-F4
-
-```
-
-
-
-
-### Extracting some plots to compare
-
-Het along the depths of the DS experiments for medium depth and high depth samples
-```{r}
-pdf("WR_GWhet_DSexp_comparison.pdf", useDingbats = F)
-plot_grid(F4, F1, F3, nrow=3, ncol=1)
-dev.off
-```
 
 
 
