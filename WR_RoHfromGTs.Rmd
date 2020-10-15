@@ -1,0 +1,150 @@
+---
+title: "WR_RoHfromGTs"
+author: "Fátima S. Barreiro"
+date: "September 24, 2020"
+output: html_document
+---
+
+
+Load required libraries
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(ggplot2)
+library(cowplot)
+library(ggrepel)
+library(reshape2)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+require(scales)
+library(ggpubr)
+library(tidyr)
+library(PairedData)
+library(gridExtra)
+```
+
+
+Reading in file containing metadata and genomic diversity metrics 
+```{r}
+data = read.table("mwr_TGF13.White_rhino.g.JH767723.tsv.gz", h=F, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+
+```{r}
+head(data)
+small = head(data, n=50000)
+```
+
+
+
+```{r}
+ggplot(small, aes(x=V1,y=V3,col=V3)) + geom_point(shape=124, size=4)
+```
+
+
+## Overlapping plot
+
+With a subset of the data
+```{r}
+small$plot=0
+small$V3=factor(small$V3,levels=c("HOM","HET","NO_GT"))
+ggplot(small,aes(x=V1,y=plot,col=V3)) + geom_point(shape=124, size=5) +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 100))
+  theme(scale_x_discrete(breaks=seq(1,50000, 10)))
+```
+
+
+
+
+
+
+With the whole scaffold
+
+```{r}
+data$plot=0
+data$V3=factor(data$V3,levels=c("HOM","HET","NO_GT"))
+ggplot(data,aes(x=V1,y=plot,col=V3)) + geom_point(shape=124, size=5)
+```
+
+
+
+
+############### Example 2 ####################################
+
+Read in example table with the genotypes of a particular sample
+```{r}
+P109 = read.table("wr_P9109_109.White_rhino.g.subset_JH767788.recode.tsv.gz", h=F, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+
+```
+
+```{r}
+colnames(P109) = c("Position", "Genotype", "State")
+head(P109)
+```
+
+Make a subset to play with more easily 
+```{r}
+sP109 = P109[1:5000,]
+```
+
+
+
+```{r}
+sP109$plot=0
+sP109$State=factor(sP109$State,levels=c("NO_GT", "HOM","HET"))
+
+ggplot(sP109,aes(x=Position,y=plot,col=State)) + geom_point(shape=124, size=80) + theme_minimal() +
+  scale_y_discrete() +
+  scale_x_continuous(breaks = seq(from = 1, to = 5000, by = 1)) +
+  scale_colour_manual(values=c("yellow", "skyblue", "darkred")) +
+  theme(legend.position = "top", legend.title=element_blank(), axis.text=element_blank(), axis.title.y=element_blank()) +
+  guides(color = guide_legend(override.aes = list(size = 8)))
+```
+
+
+
+
+
+```{r}
+P109$plot=0
+P109$State=factor(P109$State,levels=c("NO_GT", "HOM","HET"))
+
+P = ggplot(P109,aes(x=Position,y=plot,col=State)) + geom_point(shape=124, size=80) + theme_minimal() +
+  scale_y_discrete() +
+  scale_x_continuous(breaks = seq(from = 1, to = 13646161, by = 1)) +
+  scale_colour_manual(values=c("yellow", "skyblue", "darkred")) +
+  theme(legend.position = "top", legend.title=element_blank(), axis.text=element_blank(), axis.title.y=element_blank()) +
+  guides(color = guide_legend(override.aes = list(size = 8)))
+
+P
+```
+
+
+```{r}
+pdf("wr_P9109_109.White_rhino.g.subset_JH767788.pdf", useDingbats = F)
+P
+dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
