@@ -1,0 +1,167 @@
+---
+title: "WR_v4 Het tests"
+author: "Fátima S. Barreiro"
+date: "October 20, 2020"
+output: html_document
+---
+
+
+Load required libraries
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(ggplot2)
+library(cowplot)
+library(ggrepel)
+library(reshape2)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+require(scales)
+library(ggpubr)
+library(tidyr)
+library(PairedData)
+library(gridExtra)
+```
+
+
+
+Open error rates table
+```{r}
+error = read.csv("GWhet_errors_ErTv.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+
+Open metadata and genomic metrics table
+```{r}
+data = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+Make a dataframe with relevant columns
+```{r}
+HET3x = as.data.frame(data$gw_het_GL2_3x)
+HET5x = as.data.frame(data$gw_het_GL2_5x)
+ErTv = as.data.frame(error$ErTv)
+ID1 = as.data.frame(data$lab_ID)
+ID2 = as.data.frame(error$ID)
+```
+
+```{r}
+correct = cbind(ID1, ID2, ErTv, HET3x, HET5x)
+colnames(correct) = c("ID1", "ID2", "ErTv", "HET3x", "HET5x")
+head(correct)
+```
+
+
+Calculate estimates of het corrected by ErTv
+
+```{r}
+correct = correct %>%
+  mutate(HET3x_corrected = HET3x-(HET3x*ErTv), HET5x_corrected = HET5x-(HET5x*ErTv))
+
+head(correct)
+
+```
+
+
+Prepare for plotting
+
+```{r}
+correct2plot = correct %>%
+  dplyr::select(ID1, HET3x, HET5x, HET3x_corrected, HET5x_corrected)
+  
+correct2plot = reshape2::melt(correct2plot)
+```
+
+
+```{r}
+ggplot(correct2plot, aes(ID1, value, colour=variable)) + geom_point() + theme_bw() +
+  theme(axis.text.x=element_text(angle=80, hjust=1), legend.title = element_blank(), legend.position = "top") 
+  #scale_colour_manual(values=c("darkorange", "blue"), labels=c("gw_het_GL2_3x_ErTv", "gw_het_GL2_5x_ErTv"))
+```
+
+
+
+## Estimates of Het across groups and group comparisons
+
+
+### With GL2 <3x estimate excluding the 4 samples of average depth of coverage <5x
+
+```{r}
+data$time_window=factor(data$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+
+
+```{r}
+# plot het values per time window
+gw_het = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(time_window, gw_het_GL2_3x_ErTv)) + 
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80')))
+  
+  
+# plot violin per group
+gw_het = gw_het +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
+  
+  # add scatter points per group
+  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
+  
+  stat_summary(fun=mean, fun.min = function (gw_het_GL2_3x_ErTv) mean(gw_het_GL2_3x_ErTv) - sd(gw_het_GL2_3x_ErTv), 
+               fun.max = function(gw_het_GL2_3x_ErTv) mean(gw_het_GL2_3x_ErTv) + sd(gw_het_GL2_3x_ErTv), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), label.y = c(0.00024, 0.00020), size=2.5) +
+  
+  # embellish
+  scale_y_continuous(limits=c(0.00007, 0.00025),labels = function(x) format(x, scientific = FALSE)) +
+  
+  
+  labs(x=NULL, y="Genome-wide heterozygosity (tv)") + geom_text_repel(data=data, aes(label=lab_ID), segment.size=.15, size=2)
+
+gw_het
+```
+
+
+
+### With GL2 <5x estimate excluding the 4 samples of average depth of coverage <5x
+
+```{r}
+# plot het values per time window
+gw_het = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(time_window, gw_het_GL2_5x_ErTv)) + 
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80')))
+  
+  
+# plot violin per group
+gw_het = gw_het +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
+  
+  # add scatter points per group
+  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
+  
+  stat_summary(fun=mean, fun.min = function (gw_het_GL2_5x_ErTv) mean(gw_het_GL2_5x_ErTv) - sd(gw_het_GL2_5x_ErTv), 
+               fun.max = function(gw_het_GL2_5x_ErTv) mean(gw_het_GL2_5x_ErTv) + sd(gw_het_GL2_5x_ErTv), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), label.y = c(0.00027, 0.00020), size=2.5) +
+  
+  # embellish
+  scale_y_continuous(limits=c(0.00007, 0.00030),labels = function(x) format(x, scientific = FALSE)) +
+  
+  
+  labs(x=NULL, y="Genome-wide heterozygosity (tv)") + geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=lab_ID), segment.size=.15, size=2)
+
+gw_het
+```
+
+
+
