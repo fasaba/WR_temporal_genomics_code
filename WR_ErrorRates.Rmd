@@ -24,8 +24,9 @@ library(gridExtra)
 
 Reading in file containing metadata and genomic diversity metrics 
 ```{r}
-data = read.table("wr_P9109_110best_BRout.Est.txt", header=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+data = read.table("WR_ErrorRates_P9109_110best_BRout.Est.txt", header=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 ```
+
 
 Reading in file containing metadata and genomic diversity metrics 
 ```{r}
@@ -33,6 +34,10 @@ metadata = read.csv("WR_TableS1_v4.csv", h=T, fill=T, stringsAsFactors=T, fileEn
 ```
 
 
+
+### Visualizing the error rates per sample
+
+Bind the sample lab_IDs to the error rates dataframe so each row of error rates can be assigned to its corresponding sample
 ```{r}
 smalldata = data[1:52,]
 IDs = as.data.frame(metadata$lab_ID)
@@ -42,12 +47,14 @@ head(smalldata)
 ```
 
 
+Melt the data to facilitate plotting
 ```{r}
 smalldataM = reshape2::melt(smalldata)
 head(smalldataM)
 ```
 
-Plot
+
+Visualizing the error rates (all types) per sample
 ```{r}
 E = ggplot(smalldataM, aes(ID, value, fill=variable, colour=variable)) + geom_bar(position = position_dodge(0.6), stat = "identity", width=0.4, size=0.2) + theme_bw() +
   theme(axis.text.x=element_text(angle=80, hjust=1), legend.key.size= unit(4, "mm"), legend.title=element_blank()) +
@@ -58,7 +65,7 @@ E
 ```
 
 
-
+Save the plot
 ```{r eval=FALSE, include=FALSE}
 pdf("WR_ErrorRates.pdf", height=5, width=9, useDingbats = F)
 E
@@ -67,22 +74,16 @@ dev.off()
 
 
 
+
 ### Correlations between error rates and estimates of heterozygosity
 
-Parse the dataframe: add the heterozygosity estimates from the metadata
+Parse the dataframe: add the heterozygosity estimates from the metadata. In this case I used the estimates with GL2 and filtering sites below 3x
 ```{r}
-head(smalldata)
-HET = metadata$gw_het_GL2_3x
-smalldataH = cbind(smalldata, HET)
+HET3x = metadata$gw_het_GL2_3x
+HET5x = metadata$gw_het_GL2_5x
+
+smalldataH = cbind(smalldata, HET3x, HET5x)
 head(smalldataH)
-```
-
-
-Calculate some basic correlation coefficients between the het estimate and the error rates separately
-```{r}
-num_cols = names(smalldataH)[sapply(smalldataH, is.numeric)] #get a list of numerical columns in the dataframe
-length(num_cols)
-cor(smalldataH$HET, smalldataH[num_cols]) #calculate correlations between all numerical correlations
 ```
 
 
@@ -101,24 +102,45 @@ correlate_vars = function(dataframe, het_var, error_var, ID) {
 ```
 
 
-Use the function to visualise correlation plots of every error rate with het
+Use the function to visualise correlation plots of every error rate with the two Het estimates chosen
 ```{r}
-correlate_vars(smalldataH, "HET", "TtoC", "ID")
-correlate_vars(smalldataH, "HET", "CtoT", "ID")
-correlate_vars(smalldataH, "HET", "GtoA", "ID")
-correlate_vars(smalldataH, "HET", "AtoG", "ID")
-correlate_vars(smalldataH, "HET", "GtoT", "ID")
-correlate_vars(smalldataH, "HET", "TtoG", "ID")
-correlate_vars(smalldataH, "HET", "AtoT", "ID")
-correlate_vars(smalldataH, "HET", "TtoA", "ID")
-correlate_vars(smalldataH, "HET", "GtoC", "ID")
-correlate_vars(smalldataH, "HET", "CtoG", "ID")
-correlate_vars(smalldataH, "HET", "AtoC", "ID")
-correlate_vars(smalldataH, "HET", "CtoA", "ID")
+correlate_vars(smalldataH, "HET3x", "TtoC", "ID")
+correlate_vars(smalldataH, "HET3x", "CtoT", "ID")
+correlate_vars(smalldataH, "HET3x", "GtoA", "ID")
+correlate_vars(smalldataH, "HET3x", "AtoG", "ID")
+correlate_vars(smalldataH, "HET3x", "GtoT", "ID")
+correlate_vars(smalldataH, "HET3x", "TtoG", "ID")
+correlate_vars(smalldataH, "HET3x", "AtoT", "ID")
+correlate_vars(smalldataH, "HET3x", "TtoA", "ID")
+correlate_vars(smalldataH, "HET3x", "GtoC", "ID")
+correlate_vars(smalldataH, "HET3x", "CtoG", "ID")
+correlate_vars(smalldataH, "HET3x", "AtoC", "ID")
+correlate_vars(smalldataH, "HET3x", "CtoA", "ID")
 
 ```
 
-Significantly correlated with het:
+
+
+```{r}
+correlate_vars(smalldataH, "HET5x", "TtoC", "ID")
+correlate_vars(smalldataH, "HET5x", "CtoT", "ID")
+correlate_vars(smalldataH, "HET5x", "GtoA", "ID")
+correlate_vars(smalldataH, "HET5x", "AtoG", "ID")
+correlate_vars(smalldataH, "HET5x", "GtoT", "ID")
+correlate_vars(smalldataH, "HET5x", "TtoG", "ID")
+correlate_vars(smalldataH, "HET5x", "AtoT", "ID")
+correlate_vars(smalldataH, "HET5x", "TtoA", "ID")
+correlate_vars(smalldataH, "HET5x", "GtoC", "ID")
+correlate_vars(smalldataH, "HET5x", "CtoG", "ID")
+correlate_vars(smalldataH, "HET5x", "AtoC", "ID")
+correlate_vars(smalldataH, "HET5x", "CtoA", "ID")
+
+```
+
+
+
+
+The following error rates correlate significantly with Het estimates:
 G-to-T
 T-to-G (marginally)
 A-to-T
@@ -126,47 +148,52 @@ T-to-A
 A-to-C (marginally)
 C-to-A
 
+This is probably due to the samples in the SRR which show higher error rates at transversion sites than the remaining batches.
+
+On the other hand, Het estimates with 5x filtering seem to correlate with transition error rates too, however this seems to be driven by the low depth of coverage samples that will be excluded (TG0450, TG0451, TG0456, TGF01).
 
 
 
-### Correct the het estimates by the error rates that significantly correlate with het (i.e. the Tv error rates)
-
-
-```{r}
-head(smalldataH)
-
-```
-
+### Calculate a transversion composite error rate with which to correct the Het estimates to buffer the effect of the SRR batch
 
 Calculate a composite error rate at Tv sites by summing up all error rates per row
 ```{r}
-smalldataH %>% 
+smalldata %>% 
   dplyr::select(GtoT, TtoG, AtoT, TtoA, AtoC, CtoA) %>% 
-  rowSums(na.rm=TRUE) -> smalldataH$ErTv
+  rowSums(na.rm=TRUE) -> smalldata$ErTv
 
-head(smalldataH)
+head(smalldata)
 ```
 
 
-Calculate the corrected het by operating with the composite error rate and the het estimate
+Save these error rates (single and composite) as a separate file 
 ```{r}
-smalldataHc = smalldataH %>% 
-  mutate(HET_corrected = HET-(HET*ErTv))
+write.table(smalldata, file="WR_Errors_ErTv.csv", row.names=F, col.names=T, sep=",")
+```
 
+
+
+
+
+
+### Calculate the corrected het by operating with the composite error rate and the het estimate
+
+```{r}
+smalldataHc = cbind(smalldataH, smalldata$ErTv)
 head(smalldataHc)
+
+# subtract from the Het estimate the excess driven by transversion error rates
+smalldataHc = smalldataHc %>% 
+  mutate(HET3x_corrected = HET3x-(HET3x*smalldata$ErTv), HET5x_corrected = HET5x-(HET5x*smalldata$ErTv) )
+
 ```
 
-Save these newly calculated values as a file
-```{r}
-write.table(smalldataHc, file="GWhet_ErTv_corrected.csv", row.names=F, col.names=T, sep=",")
-```
 
 
 Visualise the new het estimates
-
 ```{r}
 tinydataHc = smalldataHc %>%
-  dplyr::select(ID, HET, HET_corrected)
+  dplyr::select(ID, HET3x, HET5x, HET3x_corrected, HET5x_corrected)
 
 tinydataHc = reshape2::melt(tinydataHc)
 ```
@@ -175,17 +202,9 @@ tinydataHc = reshape2::melt(tinydataHc)
 
 ```{r}
 P = ggplot(tinydataHc, aes(ID, value, colour=variable)) + geom_point() + theme_bw() +
-  theme(axis.text.x=element_text(angle=80, hjust=1), legend.title = element_blank(), legend.position = "top") +
-  scale_colour_manual(values=c("darkorange", "blue"), labels=c("gw_het_GL2_3x", "gw_het_GL2_3x_ErTvCorrected")) 
+  theme(axis.text.x=element_text(angle=80, hjust=1), legend.title = element_blank(), legend.position = "top")
   
 P
-```
-
-
-```{r}
-pdf("WR_GWhet_ErTv.pdf", height=5, width=9, useDingbats = F)
-P
-dev.off()
 ```
 
 
