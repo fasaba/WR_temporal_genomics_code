@@ -1,0 +1,151 @@
+---
+title: "WR_v4_PCAs"
+author: "Fátima S. Barreiro"
+date: "October 29, 2020"
+output: html_document
+---
+
+Load required libraries
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(ggpubr)
+library(tidyr)
+library(cowplot)
+library(ggrepel)
+```
+
+
+```{r}
+# load metadata
+md = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+
+# make a subset where related inds (1 from each pair) has been removed
+md_unrel = md[md$sample_name != 'CD-un.1' & md$sample_name != 'un1856.1' & md$sample_name != 'ZA1842.1', ]
+```
+
+
+## PCA of all 4 groups, entire unrelated dataset (49 samples)
+
+Open the covariance matrix and do the eigen decomposition into vectors and values
+```{r}
+# prepare covariance matrix
+D <-"WR.49I.above13Mb_NoSexChr_NonMaskedRegions_GL2_unrelated.tv.cov"
+m <- as.matrix(read.table(D))
+
+# run the eigen decomposition
+e <- eigen(m)
+
+# calculate the eigenvalues
+eval = e$values/sum(e$values)
+```
+
+
+Select PCs to plot and bind them to metadata
+```{r}
+# PC1 and PC2
+pcs <- as.data.frame(e$vectors[,1:3])
+colnames(pcs) = c("PC1", "PC2", "PC3")
+
+# Extract relevant columns from metadata for plotting
+mini_md = as.data.frame(md_unrel %>% select(time_window, country))
+
+evec <- cbind(mini_md, pcs)
+head(evec)
+```
+
+Make a composite column for the legend
+```{r}
+evec$window_country <- paste(evec$time_window, evec$country, sep = "-")
+head(evec)
+```
+
+
+Set the right order of factors for the legend
+```{r}
+evec$time_window=factor(evec$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+
+Visualize PCs with legend per subspecies, time window and country of origin
+```{r}
+## PC1 vs PC2
+A = ggplot(evec, aes(x=PC1, y=PC2)) +
+  
+  # draw intercept lines
+  geom_vline(xintercept=0, colour="gray", linetype = "longdash")+
+  geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
+  
+  # plot data points (2 legend alternatives)
+  geom_point(aes(colour = time_window, shape = time_window), alpha=.7, size=4) + 
+  
+  # assign colors and shapes
+  scale_colour_manual(values=c("gold3", "darkorange", "royalblue4", "steelblue3")) +
+  scale_shape_manual(values=c(15, 16, 17, 8)) +
+  
+  # labels, titles, background, etc.
+  xlab(paste0("PC1 (", round(eval[1]*100, 2), "%)"))+
+  ylab(paste0("PC2 (", round(eval[2]*100, 2), "%)"))+
+  
+  theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
+        strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=10), legend.key.size=unit(.8, "cm"))
+
+A
+```
+
+
+```{r}
+## PC2 vs PC3
+B = ggplot(evec, aes(x=PC2, y=PC3)) +
+  
+  # draw intercept lines
+  geom_vline(xintercept=0, colour="gray", linetype = "longdash")+
+  geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
+  
+  # plot data points (2 legend alternatives)
+  geom_point(aes(colour = time_window, shape = time_window), alpha=.7, size=4) + 
+  
+  # assign colors and shapes
+  scale_colour_manual(values=c("gold3", "darkorange", "royalblue4", "steelblue3")) +
+  scale_shape_manual(values=c(15, 16, 17, 8)) +
+  
+  # labels, titles, background, etc.
+  xlab(paste0("PC2 (", round(eval[2]*100, 2), "%)"))+
+  ylab(paste0("PC3 (", round(eval[3]*100, 2), "%)"))+
+  
+  theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
+        strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=10), legend.key.size=unit(.8, "cm"))
+
+B
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
