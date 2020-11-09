@@ -30,7 +30,7 @@ data = read.table("WR_ErrorRates_P9109_110best_BRout.Est.txt", header=T, fill=T,
 
 Reading in file containing metadata and genomic diversity metrics 
 ```{r}
-metadata = read.csv("WR_TableS1_v4.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+metadata = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 ```
 
 
@@ -39,10 +39,18 @@ metadata = read.csv("WR_TableS1_v4.csv", h=T, fill=T, stringsAsFactors=T, fileEn
 
 Bind the sample lab_IDs to the error rates dataframe so each row of error rates can be assigned to its corresponding sample
 ```{r}
+# subset the error rate rows of interest
 smalldata = data[1:52,]
+
+# take from the metadata the relevant identification columns
 IDs = as.data.frame(metadata$lab_ID)
 colnames(IDs) = "ID"
-smalldata = cbind(smalldata, IDs)
+
+samples = as.data.frame(metadata$sample_name)
+colnames(samples) = "sample_name"
+
+# bind the error rate subsetted data with the identifier columns
+smalldata = cbind(smalldata, IDs, samples)
 head(smalldata)
 ```
 
@@ -55,11 +63,11 @@ head(smalldataM)
 
 
 Visualizing the error rates (all types) per sample
+
 ```{r}
 E = ggplot(smalldataM, aes(ID, value, fill=variable, colour=variable)) + geom_bar(position = position_dodge(0.6), stat = "identity", width=0.4, size=0.2) + theme_bw() +
   theme(axis.text.x=element_text(angle=80, hjust=1), legend.key.size= unit(4, "mm"), legend.title=element_blank()) +
-  ylab("Error rate") + xlab("Sample lab ID") +
-  ggtitle("Error rates per sample")
+  ylab("Error rate") + xlab("Sample name") + scale_x_discrete(labels = smalldataM$sample_name)
 
 E
 ```
@@ -67,7 +75,7 @@ E
 
 Save the plot
 ```{r eval=FALSE, include=FALSE}
-pdf("WR_ErrorRates.pdf", height=5, width=9, useDingbats = F)
+pdf("WR_v4_ErrorRates.pdf", height=5, width=9, useDingbats = F)
 E
 dev.off()
 ```

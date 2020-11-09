@@ -90,8 +90,8 @@ A = ggplot(evec, aes(x=PC1, y=PC2)) +
   
   theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=10), legend.key.size=unit(.8, "cm"),
-        legend.position = "top", legend.margin=margin(0,0,0,0), legend.box.margin=margin(0,-10,-10,-10), plot.margin=unit(c(0,0,0,0), "cm"))
+        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=8), legend.key.size=unit(.8, "cm"),
+        legend.position = "top", legend.margin=margin(0,0,0,0), legend.box.margin=margin(0,-10,-10,-10), plot.margin = unit(c(0,0,0,0.2), "lines"))
 
 A
 ```
@@ -119,7 +119,7 @@ B = ggplot(evec, aes(x=PC2, y=PC3)) +
   theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=10), legend.key.size=unit(.8, "cm"), 
-        legend.position = "top", plot.margin=unit(c(0,0,0,0), "cm"))
+        legend.position = "top", legend.margin=margin(0,0,0,0), legend.box.margin=margin(0,-10,-10,-10), plot.margin=unit(c(0,0,0,1), "cm"))
 
 B
 ```
@@ -200,10 +200,10 @@ nwr = ggplot(evecNWR, aes(x=PC1, y=PC2)) +
   
   theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=6), legend.key.size=unit(.4, "cm"),
-        legend.box.margin=margin(-10,-10,-10,-10)) +
+        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=7), legend.key.size=unit(.4, "cm"),
+        legend.box.margin=margin(-10,-10,-10,-10), plot.margin = unit(c(1,0.5,0,0), "lines")) +
   
-  guides(colour = guide_legend(order = 1), shape = guide_legend(order = 2))
+  guides(colour = guide_legend(order = 1), shape = guide_legend(order = 2)) #+ geom_text_repel(data=evecNWR, aes(label=sample_name), segment.size=.15, size=2)
 
 nwr
 ```
@@ -272,10 +272,11 @@ swr = ggplot(evecSWR, aes(x=PC1, y=PC2)) +
   
   theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=6), legend.key.size=unit(.4, "cm"), 
-        legend.box.margin=margin(-10,-10,-10,-10)) +
+        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=7), legend.key.size=unit(.4, "cm"), 
+        legend.box.margin=margin(-10,-10,-10,-10), plot.margin = unit(c(1,0.5,0,0), "lines")) +
   
-  guides(colour = guide_legend(order = 1), shape = guide_legend(order = 2))
+  guides(colour = guide_legend(order = 1), shape = guide_legend(order = 2)) +
+  geom_text_repel(data=subset(evecSWR, sample_name == "ZA1845.2"), aes(label=sample_name), segment.size=0, size=3, colour="gray20", ylim=c(-0.32, -0.1), xlim=c(-0.25, -0.05))
   
    
 
@@ -291,6 +292,7 @@ subsp = ggarrange(nwr, swr, nrow = 2, ncol = 1, labels=c("B", "C"))
 
 ```{r}
 PCAps = ggarrange(A, subsp, nrow=1, ncol=2, labels=c("A", NULL), align = c("v"))
+PCAps
 ```
 
 
@@ -300,6 +302,7 @@ pdf('WR_v4_PCAs.pdf', width=9, useDingbats = F)
 PCAps
 dev.off()
 ```
+
 
 
 
