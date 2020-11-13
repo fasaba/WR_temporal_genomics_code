@@ -1,0 +1,112 @@
+---
+title: "WR_v4_geneticLoad"
+author: "Fátima S. Barreiro"
+date: "November 13, 2020"
+output: html_document
+---
+
+
+Load required libraries
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(ggplot2)
+library(cowplot)
+library(ggrepel)
+library(reshape2)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+require(scales)
+library(ggpubr)
+library(tidyr)
+library(PairedData)
+library(gridExtra)
+```
+
+
+
+Open error rates table
+```{r}
+snpeff = read.csv("snpeff_output.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+
+
+
+
+
+```{r}
+snpeff$group=factor(snpeff$group,levels=c("SWRpre Namibia","SWRpre South Africa","SWRpost South Africa", "SWRpost captive"))
+```
+
+```{r}
+ggplot(snpeff, aes(lab_ID, hom_derived)) + 
+  geom_col(aes(group=group, fill=group)) +
+  coord_flip()
+
+ggplot(snpeff, aes(lab_ID, het_derived)) + 
+  geom_col(aes(group=group, fill=group)) +
+  coord_flip()
+```
+
+
+
+```{r}
+homratio1 = ggplot(snpeff, aes(lab_ID, hom_ratio)) + theme_bw() +
+  geom_col(aes(group=group, fill=group)) +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +
+  labs(y="Homozygous derived LoF/synonymous ratio", x="Sample ID") +
+  theme(legend.title=element_blank())
+
+homratio1
+```
+
+
+
+
+```{r}
+# the hom ratio
+homratio2 = ggplot(snpeff, aes(group, hom_ratio)) + theme_bw() +
+  geom_boxplot(aes(group=group, colour=group), fill="gray90") +
+  geom_jitter(aes(group, hom_ratio, group=group, colour=group), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +
+  labs(y="Homozygous derived LoF/synonymous ratio", x=NULL) +
+  theme(legend.title=element_blank(), axis.text.x=element_text(angle=20, hjust=1))
+
+homratio2
+
+
+```
+
+
+```{r}
+pdf("WR_v4_SWRgeneticLoad.pdf", useDingbats = F)
+ggarrange(homratio1, homratio2, nrow=2, ncol=1)
+dev.off()
+```
+
+
+
+
+```{r}
+# the het ratio
+hetratio = ggplot(snpeff, aes(group, het_ratio)) + 
+  geom_boxplot(aes(group=group, colour=group)) +
+  geom_jitter(aes(group, het_ratio, group=group, colour=group), shape=17, position=position_jitter(0.11), cex=2, alpha=.7)
+
+hetratio
+```
+
+
+
+```{r}
+ggplot(snpeff, aes(sample, hom_ratio)) + 
+  geom_point(aes(group=group, colour=group))
+```
+
+
+
+
+
+
+
