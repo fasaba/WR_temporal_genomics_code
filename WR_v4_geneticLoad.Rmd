@@ -33,6 +33,7 @@ snpeff = read.csv("snpeff_output.csv", h=T, fill=T, stringsAsFactors=T, fileEnco
 
 
 
+## Plot number of homozygous derived sites per individual
 
 ```{r}
 snpeff$group=factor(snpeff$group,levels=c("SWRpre Namibia","SWRpre South Africa","SWRpost South Africa", "SWRpost captive"))
@@ -40,7 +41,7 @@ snpeff$group=factor(snpeff$group,levels=c("SWRpre Namibia","SWRpre South Africa"
 
 ```{r}
 ggplot(snpeff, aes(lab_ID, hom_derived)) + 
-  geom_col(aes(group=group, fill=group)) +
+  geom_col(aes(group=cluster, fill=cluster)) +
   coord_flip()
 
 ggplot(snpeff, aes(lab_ID, het_derived)) + 
@@ -50,28 +51,72 @@ ggplot(snpeff, aes(lab_ID, het_derived)) +
 
 
 
+## Plot the ratio of lof/syn per individual
+
 ```{r}
-homratio1 = ggplot(snpeff, aes(lab_ID, hom_ratio)) + theme_bw() +
+homratio = ggplot(snpeff, aes(lab_ID, hom_ratio)) + theme_bw() +
   geom_col(aes(group=group, fill=group)) +
   coord_flip() +
   scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +
   labs(y="Homozygous derived LoF/synonymous ratio", x="Sample ID") +
   theme(legend.title=element_blank())
 
-homratio1
+homratio
 ```
 
 
 
 
+## Plotting per time window
+```{r}
+snpeff$time_window=factor(snpeff$time_window,levels=c("SWRpre", "SWRpost"))
+```
+
+
+```{r}
+# the hom ratio
+homratio1 = ggplot(snpeff, aes(time_window, hom_ratio)) + theme_bw() +
+  geom_boxplot(aes(group=time_window, colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
+  geom_point(aes(time_window, hom_ratio, group=time_window, colour=time_window), shape=17, cex=2, alpha=.7) +
+  
+  scale_color_manual(values= (c("royalblue4", "steelblue3"))) +
+  
+  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1), limits=c(0.013, 0.027), breaks=seq(0.014, 0.026, 0.004)) +
+  
+  labs(y="LoF/synonymous ratio at homozygous derived sites", x=NULL) +
+  theme(legend.position = "none", axis.text.x=element_text(size=12)) +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), label.y = c(0.026, 0.027)) +
+  
+  geom_text_repel(data=subset(snpeff, time_window!="SWRpost"), aes(label=sample), box.padding=.5, segment.size=.15, size=3, force = 20, colour="grey20", xlim=c(0,"SWRpre"), direction="x")
+
+homratio1
+
+
+```
+
+
+
+## Plotting per time window and Country
+
+```{r}
+snpeff$group=factor(snpeff$group,levels=c("SWRpre Namibia","SWRpre South Africa","SWRpost South Africa", "SWRpost captive"))
+```
+
+
 ```{r}
 # the hom ratio
 homratio2 = ggplot(snpeff, aes(group, hom_ratio)) + theme_bw() +
-  geom_boxplot(aes(group=group, colour=group), fill="gray90") +
+  geom_boxplot(aes(group=group, colour=group), fill="gray70", lwd=.5, alpha=.4) +
   geom_jitter(aes(group, hom_ratio, group=group, colour=group), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
+  
+  scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
+  
   scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +
-  labs(y="Homozygous derived LoF/synonymous ratio", x=NULL) +
-  theme(legend.title=element_blank(), axis.text.x=element_text(angle=20, hjust=1))
+  labs(y="LoF/synonymous ratio at homozygous derived sites", x=NULL) +
+  theme(legend.position = "none", axis.text.x=element_text(angle=20, hjust=1)) +
+  
+  geom_text_repel(data=snpeff, aes(label=sample), segment.size=.15, size=2)
 
 homratio2
 
@@ -79,31 +124,57 @@ homratio2
 ```
 
 
+
+## Plotting per time window and cluster
+
 ```{r}
-pdf("WR_v4_SWRgeneticLoad.pdf", useDingbats = F)
-ggarrange(homratio1, homratio2, nrow=2, ncol=1)
+snpeff$cluster=factor(snpeff$cluster,levels=c("SWRpre West", "SWRpre East" ,"SWRpost wild", "SWRpost captive"))
+```
+
+```{r}
+# the hom ratio
+homratio3 = ggplot(snpeff, aes(cluster, hom_ratio)) + theme_bw() +
+  geom_boxplot(aes(group=cluster, colour=cluster), fill="gray70", lwd=.5, alpha=.4) +
+  geom_jitter(aes(cluster, hom_ratio, group=cluster, colour=cluster), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
+  
+  scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
+  
+  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1), limits=c(0.013, 0.027), breaks=seq(0.014, 0.026, 0.004)) +
+  
+  labs(y="LoF/synonymous ratio at homozygous derived sites", x=NULL) +
+  theme(legend.position = "none", axis.text.x=element_text(angle=30, hjust=1, size=12)) +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre West", "SWRpre East")), method.args = list(alternative = "greater"), label.y = c(0.026, 0.027)) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpost wild", "SWRpost captive")), method.args = list(alternative = "two.sided")) 
+
+  #geom_text_repel(data=snpeff, aes(label=sample), segment.size=.15, size=2)
+
+homratio3
+
+
+```
+
+
+## Make composite figure for manuscript
+
+```{r}
+homratio_fig = ggarrange(homratio1, 
+          homratio3 + theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     plot.margin = margin(r = 1, l = 1)), 
+          nrow=1, ncol=2, align="h")
+
+homratio_fig
+```
+
+
+
+```{r}
+pdf("WR_v4_SWRgeneticLoad_v2.pdf", height=5, useDingbats = F)
+homratio_fig
 dev.off()
 ```
-
-
-
-
-```{r}
-# the het ratio
-hetratio = ggplot(snpeff, aes(group, het_ratio)) + 
-  geom_boxplot(aes(group=group, colour=group)) +
-  geom_jitter(aes(group, het_ratio, group=group, colour=group), shape=17, position=position_jitter(0.11), cex=2, alpha=.7)
-
-hetratio
-```
-
-
-
-```{r}
-ggplot(snpeff, aes(sample, hom_ratio)) + 
-  geom_point(aes(group=group, colour=group))
-```
-
 
 
 

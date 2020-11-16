@@ -21,34 +21,36 @@ library(reshape2)
 history = read.csv("WR_demographic_histories.csv", header=TRUE)
 
 # re-shape data frame to arrange all values in one column
-test <- melt(history, id.var='year')
+test <- reshape2::melt(history, id.var='year')
 test2 <- na.omit(test)
 ```
 
 ```{r}
-H = ggplot(test2, aes(x=year, y=value, color=variable)) 
+H = ggplot(test2, aes(x=year, y=value, color=variable)) +
+  scale_color_manual(values=c('darkorange', 'steelblue4')) +
+  scale_x_continuous(limits=c(1840, 2014), breaks = seq(1840, 2010, 20), expand = c(0, 0)) +
+  ylab("Number of individuals") +
+  
+   # add the bottlenecks
+  annotate("rect", xmin = 1890, xmax = 1900, ymin = 0, ymax = 20000, alpha = .3, fill='steelblue4') +
+  annotate("rect", xmin = 1960, xmax = 1970, ymin = 0, ymax = 20000, alpha = .3, fill='darkorange')
+
 ```
 
 ```{r}
 H = H + 
-   # annotate the bottlenecks
-  annotate("rect", xmin = 1890, xmax = 1900, ymin = 0, ymax = 20000, alpha = .3, fill='steelblue4') +
-  annotate("rect", xmin = 1960, xmax = 1970, ymin = 0, ymax = 20000, alpha = .3, fill='darkorange') +
-  
   # draw the pop trajectories
-  geom_point(alpha=.8, size=1.4) + geom_line(size=.8) +
-  scale_color_manual(values=c('darkorange', 'steelblue4')) +
-  xlab("Year") + ylab("Number of individuals") +
-  scale_x_continuous(limits=c(1840, 2014), breaks = seq(1840, 2010, 10), expand = c(0, 0)) +
-  #scale_y_discrete(limits=c(0, 23000), breaks = seq(0, 23000, 5000), expand = c(0, 0)) +
-  theme(axis.text.x = element_text(size=9, angle=45, hjust=1, face="bold"), axis.line.x = element_line(color="gray20", size = .7), 
+  geom_point(alpha=.8, size=1) + geom_line(size=.8) +
+  
+  # format axes and legend
+  theme(axis.text.x = element_text(size=9, angle=45, hjust=1, face="bold"), 
+        axis.line.x = element_line(color="gray20", size = .7), axis.title.x=element_blank(),
+        axis.text.y = element_text(size=8, hjust=1, face="bold"), axis.title.y=element_text(size=9),
         axis.ticks= element_line(color="gray20"),
-        axis.text.y = element_text(size=8, hjust=1, face="bold"),
-        axis.title.x=element_text(size=7), axis.title.y=element_text(size=7),
         legend.title = element_blank(), legend.text = element_text(size = 9), 
         legend.background = element_rect(fill="white", size=0.2, linetype = 0),
         legend.key.size = unit(.7, "cm"), legend.key=element_blank(),
-        legend.position = "top" ,
+        legend.position = "top" , legend.margin=margin(0,-10,-10,-10), legend.box.margin=margin(0,-10,-10,-10),
         panel.background = element_rect(fill='white'), 
         panel.grid.major.y = element_line(colour="gray40", size=.6, linetype=3)) +
   
@@ -62,7 +64,7 @@ H
 ```
 
 ```{r}
-pdf('WR_v3_Fig1B_v1.pdf', height=4, width=4.5, useDingbats = F)
+pdf('WR_v4_Fig1B_v1.pdf', height=4, width=4.5, useDingbats = F)
 H
 dev.off()
 ```

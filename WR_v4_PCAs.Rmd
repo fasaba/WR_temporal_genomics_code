@@ -57,14 +57,19 @@ head(evec)
 
 Make a composite column for the legend
 ```{r}
-evec$window_country <- paste(evec$time_window, evec$country, sep = "-")
+evec$window_country <- paste(evec$time_window, evec$country, sep = " ")
 head(evec)
 ```
 
 
+
+
+
 Set the right order of factors for the legend
+
+
 ```{r}
-evec$time_window=factor(evec$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+evec$window_country=factor(evec$window_country,levels=c("NWRpre DRC", "NWRpre Sudan", "NWRpre Uganda", "NWRpost South Sudan", "NWRpost Sudan", "NWRpost Uganda", "SWRpre South Africa", "SWRpre Namibia", "SWRpost unknown", "SWRpost South Africa", "SWRpost captive"))
 ```
 
 
@@ -78,11 +83,12 @@ A = ggplot(evec, aes(x=PC1, y=PC2)) +
   geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
   
   # plot data points (2 legend alternatives)
-  geom_point(aes(colour = time_window, shape = time_window), alpha=.7, size=4) + 
+  geom_point(aes(colour = window_country, shape = window_country), alpha=.7, size=4) + 
   
   # assign colors and shapes
-  scale_colour_manual(values=c("gold3", "darkorange", "royalblue4", "steelblue3")) +
-  scale_shape_manual(values=c(15, 16, 17, 8)) +
+  scale_colour_manual(values=c("gold3", "gold3", "gold3", "darkorange", "darkorange", "darkorange", "royalblue4", "royalblue4", "steelblue3", "steelblue3" , "steelblue3" )) +
+  scale_shape_manual(values=c(15, 17, 4, 7, 17, 4, 16, 12, 13, 16, 8)) +
+  #scale_shape_manual(values=c(7, 1, 10, 17, 18, 15, 9, 8)) +
   
   # labels, titles, background, etc.
   xlab(paste0("PC1 (", round(eval[1]*100, 2), "%)"))+
@@ -91,11 +97,19 @@ A = ggplot(evec, aes(x=PC1, y=PC2)) +
   theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=8), legend.key.size=unit(.8, "cm"),
-        legend.position = "top", legend.margin=margin(0,0,0,0), legend.box.margin=margin(0,-10,-10,-10), plot.margin = unit(c(0,0,0,0.2), "lines"))
+        legend.position = "bottom", legend.margin=margin(0,0,0,0), legend.box.margin=margin(-10,-10,-10,-10))
+  
+  #guides(colour=guide_legend(nrow=2, ncol=6))
 
 A
 ```
 
+
+
+## PCs 2 vs 3
+```{r}
+evec$time_window=factor(evec$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
 
 ```{r}
 ## PC2 vs PC3
@@ -169,15 +183,20 @@ evecNWR <- cbind(mini_mdNWR, pcsNWR)
 head(evecNWR)
 ```
 
-
-
-Visualize PCs with legend per subspecies, time window and country of origin
-
+Make a composite column for the legend
 ```{r}
-evecNWR$time_window=factor(evecNWR$time_window,levels=c("NWRpre","NWRpost"))
+evecNWR$window_country <- paste(evecNWR$time_window, evecNWR$country, sep = " ")
+head(evecNWR)
 ```
 
 
+
+Set the order of the levels in the legend
+```{r}
+evecNWR$window_country=factor(evecNWR$window_country, levels=c("NWRpre DRC", "NWRpre Sudan", "NWRpre Uganda", "NWRpost South Sudan", "NWRpost Sudan", "NWRpost Uganda"))
+```
+
+Visualize PCs with legend per subspecies, time window and country of origin (new column in dataframe)
 ```{r}
 ## PC1 vs PC2
 nwr = ggplot(evecNWR, aes(x=PC1, y=PC2)) +
@@ -187,11 +206,11 @@ nwr = ggplot(evecNWR, aes(x=PC1, y=PC2)) +
   geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
   
   # plot data points (2 legend alternatives)
-  geom_point(aes(colour = time_window, shape = country), alpha=.7, size=3) + 
+  geom_point(aes(colour = window_country, shape = window_country), alpha=.7, size=3) + 
   
   # assign colors and shapes
-  scale_colour_manual(values=c("gold3", "darkorange")) +
-  scale_shape_manual(values=c(15, 18, 17, 8)) +
+  scale_colour_manual(values=c("gold3", "gold3", "gold3", "darkorange", "darkorange", "darkorange")) +
+  scale_shape_manual(values=c(15, 17, 4, 7, 17, 4)) +
   
   
   # labels, titles, background, etc.
@@ -200,10 +219,11 @@ nwr = ggplot(evecNWR, aes(x=PC1, y=PC2)) +
   
   theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=7), legend.key.size=unit(.4, "cm"),
-        legend.box.margin=margin(-10,-10,-10,-10), plot.margin = unit(c(1,0.5,0,0), "lines")) +
+        legend.title=element_blank(), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=7), legend.key.size=unit(.4, "cm"),
+        legend.box.margin=margin(-10,-10,-10,-10), plot.margin=margin(0,2,0,0)) 
   
-  guides(colour = guide_legend(order = 1), shape = guide_legend(order = 2)) #+ geom_text_repel(data=evecNWR, aes(label=sample_name), segment.size=.15, size=2)
+  #guides(colour = guide_legend(order = 1), shape = guide_legend(order = 2)) 
+  #+ geom_text_repel(data=evecNWR, aes(label=sample_name), segment.size=.15, size=2)
 
 nwr
 ```
@@ -246,11 +266,19 @@ head(evecSWR)
 ```
 
 
+Make a composite column for the legend
 ```{r}
-evecSWR$time_window=factor(evecSWR$time_window,levels=c("SWRpre","SWRpost"))
+evecSWR$window_country <- paste(evecSWR$time_window, evecSWR$country, sep = " ")
+head(evecSWR)
 ```
 
 
+Set the correct order of the levels in the legend
+```{r}
+evecSWR$window_country=factor(evecSWR$window_country, levels=c("SWRpre South Africa", "SWRpre Namibia", "SWRpost unknown", "SWRpost South Africa", "SWRpost captive"))
+```
+
+Visualize the PCs
 ```{r}
 ## PC1 vs PC2
 swr = ggplot(evecSWR, aes(x=PC1, y=PC2)) +
@@ -260,11 +288,11 @@ swr = ggplot(evecSWR, aes(x=PC1, y=PC2)) +
   geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
   
   # plot data points (2 legend alternatives)
-  geom_point(aes(colour = time_window, shape = country), alpha=.7, size=3) + 
+  geom_point(aes(colour = window_country, shape = window_country), alpha=.7, size=3) + 
   
   # assign colors and shapes
-  scale_colour_manual(values=c("royalblue4", "steelblue3")) +
-  scale_shape_manual(values=c(15, 18, 17, 8)) +
+  scale_colour_manual(values=c("royalblue4", "royalblue4", "steelblue3", "steelblue3", "steelblue3")) +
+  scale_shape_manual(values=c(16, 12, 13, 16, 8)) +
   
   # labels, titles, background, etc.
   xlab(paste0("PC1 (", round(evalSWR[1]*100, 2), "%)"))+
@@ -273,11 +301,9 @@ swr = ggplot(evecSWR, aes(x=PC1, y=PC2)) +
   theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=7), legend.key.size=unit(.4, "cm"), 
-        legend.box.margin=margin(-10,-10,-10,-10), plot.margin = unit(c(1,0.5,0,0), "lines")) +
+        legend.box.margin=margin(-10,-10,-10,-10), plot.margin=margin(0,2,0,0)) +
   
-  guides(colour = guide_legend(order = 1), shape = guide_legend(order = 2)) +
-  geom_text_repel(data=subset(evecSWR, sample_name == "ZA1845.2"), aes(label=sample_name), segment.size=0, size=3, colour="gray20", ylim=c(-0.32, -0.1), xlim=c(-0.25, -0.05))
-  
+  geom_text_repel(data=subset(evecSWR, time_window=="SWRpre"), aes(label=sample_name), segment.size=.2, segment.alpha=.1, size=2.4, force=20, box.padding=0.5, colour="gray20")
    
 
 swr
@@ -285,21 +311,43 @@ swr
 
 
 
+### Arrange the composite figure with the PCAs of interest
+
+Fist get the legend of the first plot with both subpescies
+
 ```{r}
-subsp = ggarrange(nwr, swr, nrow = 2, ncol = 1, labels=c("B", "C"))
+# Extract the legend. Returns a gtable
+leg <- get_legend(A)
+
+# Convert to a ggplot and print
+as_ggplot(leg)
 ```
 
 
+Now arrange the per-subspecies plots in a column
 ```{r}
-PCAps = ggarrange(A, subsp, nrow=1, ncol=2, labels=c("A", NULL), align = c("v"))
+subsp = ggarrange(nwr + guides(colour=F, shape=F), swr + guides(colour=F, shape=F), nrow = 2, ncol = 1, labels=c("B", "C"))
+subsp
+```
+
+
+Now arrange the first plot for both subspecies plus the column of per-subspecies plots
+```{r}
+PCAps = ggarrange(A + guides(colour=F, shape=F), subsp, nrow=1, ncol=2, labels=c("A", NULL), align = c("v"))
 PCAps
+```
+
+Now add the common legend for all 3 plots
+```{r}
+fig = plot_grid(PCAps, leg, ncol = 1, rel_heights = c(1, .3))
+fig
 ```
 
 
 
 ```{r}
-pdf('WR_v4_PCAs.pdf', width=9, useDingbats = F)
-PCAps
+pdf('WR_v4_PCAs.pdf', height=6, width=8, useDingbats = F)
+fig
 dev.off()
 ```
 
