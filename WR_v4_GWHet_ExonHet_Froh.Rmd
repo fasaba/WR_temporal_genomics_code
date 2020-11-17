@@ -1,0 +1,488 @@
+---
+title: "WR_v4 Het tests"
+author: "Fátima S. Barreiro"
+date: "October 20, 2020"
+output: html_document
+---
+
+
+Load required libraries
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(ggplot2)
+library(cowplot)
+library(ggrepel)
+library(reshape2)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+require(scales)
+library(ggpubr)
+library(tidyr)
+library(PairedData)
+library(gridExtra)
+```
+
+
+
+Open error rates table
+```{r}
+error = read.csv("GWhet_errors_ErTv.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+
+Open metadata and genomic metrics table
+```{r}
+data = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+Make a dataframe with relevant columns
+```{r}
+HET3x = as.data.frame(data$gw_het_GL2_3x)
+HET5x = as.data.frame(data$gw_het_GL2_5x)
+ErTv = as.data.frame(error$ErTv)
+ID1 = as.data.frame(data$lab_ID)
+ID2 = as.data.frame(error$ID)
+```
+
+```{r}
+correct = cbind(ID1, ID2, ErTv, HET3x, HET5x)
+colnames(correct) = c("ID1", "ID2", "ErTv", "HET3x", "HET5x")
+head(correct)
+```
+
+
+Calculate estimates of het corrected by ErTv
+
+```{r}
+correct = correct %>%
+  mutate(HET3x_corrected = HET3x-(HET3x*ErTv), HET5x_corrected = HET5x-(HET5x*ErTv))
+
+head(correct)
+
+```
+
+
+Prepare for plotting
+
+```{r}
+correct2plot = correct %>%
+  dplyr::select(ID1, HET3x, HET5x, HET3x_corrected, HET5x_corrected)
+  
+correct2plot = reshape2::melt(correct2plot)
+```
+
+
+```{r}
+ggplot(correct2plot, aes(ID1, value, colour=variable)) + geom_point() + theme_bw() +
+  theme(axis.text.x=element_text(angle=80, hjust=1), legend.title = element_blank(), legend.position = "top") 
+  #scale_colour_manual(values=c("darkorange", "blue"), labels=c("gw_het_GL2_3x_ErTv", "gw_het_GL2_5x_ErTv"))
+```
+
+
+
+## Estimates of Het across groups and group comparisons
+
+
+### With GL2 <3x estimate excluding the 4 samples of average depth of coverage <5x
+
+```{r}
+data$time_window=factor(data$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+
+
+```{r}
+# plot het values per time window
+gw_het_3x = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(time_window, gw_het_GL2_3x_ErTv)) + 
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80')))
+  
+  
+# plot violin per group
+gw_het_3x = gw_het +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
+  
+  # add scatter points per group
+  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
+  
+  stat_summary(fun=mean, fun.min = function (gw_het_GL2_3x_ErTv) mean(gw_het_GL2_3x_ErTv) - sd(gw_het_GL2_3x_ErTv), 
+               fun.max = function(gw_het_GL2_3x_ErTv) mean(gw_het_GL2_3x_ErTv) + sd(gw_het_GL2_3x_ErTv), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), label.y = c(0.00024, 0.00020), size=2.5) +
+  
+  # embellish
+  scale_y_continuous(limits=c(0.00007, 0.00025),labels = function(x) format(x, scientific = FALSE)) +
+  
+  
+  labs(x=NULL, y="Genome-wide heterozygosity (tv)") + geom_text_repel(data=data, aes(label=lab_ID), segment.size=.15, size=2)
+
+```
+
+
+
+### With GL2 <5x estimate excluding the 4 samples of average depth of coverage <5x
+
+First set the order of the time windows as they should appear on the plot
+```{r}
+data$time_window=factor(data$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+```{r}
+# plot het values per time window
+gw_het = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(time_window, gw_het_GL2_5x_ErTv)) + 
+  theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Genome-wide heterozygosity") +
+  scale_y_continuous(labels = function(x) format(x, scientific = F), limits=c(0.00008, 0.00027))
+  
+  
+# plot violin per group
+gw_het = gw_het +  
+  geom_violin(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
+  
+  # add scatter points per group
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='gray30', width=.2, lwd=.4)
+  
+
+gw_het = gw_het + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), label.y = c(0.00026, 0.00025), size=3, colour="gray20")   
+#+ #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
+
+gw_het
+```
+
+
+
+
+
+
+
+
+#############################################################################
+
+## RoH length and FRoH 
+
+After parsing the output of BCFtools RoH in the server, the resulting values were copy-pasted to the metadata/data spreadsheet used here.
+Now visualize and compare temporal groups in terms of FRoH and RoH length.
+
+First set the order of the time windows as they should appear on the plot
+```{r}
+data$time_window=factor(data$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+
+
+#### Plot FRoH per individual in time-window groups
+```{r}
+# plot het values per time window
+fRoh = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
+       aes(time_window, Froh_10scf)) +
+  
+  # format scale in y axis
+  scale_y_continuous(limits=c(0, 0.55), breaks=seq(0, 0.55, 0.1), labels=scales::number_format(accuracy = 0.01)) +
+
+# set up the panel
+theme_bw() + theme(legend.position = "none") + labs(x=NULL, y=expression("F"["RoH"]))
+
+  # plot violin per group
+fRoh = fRoh +  
+  geom_violin(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
+  
+  # add scatter points per group
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='gray30', width=.2, lwd=.4)
+  
+  fRoh = fRoh + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(0.5, 0.45), size=3, colour="gray20") 
+  #+
+  
+  #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
+  
+
+fRoh
+```
+
+
+
+#### Plot average RoH length per individual in the 10 largest scaffolds
+
+
+Visualize average RoH length in the 10 largest scaffolds
+```{r}
+aveRoh = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
+       aes(time_window, ave_RoH_len)) +
+  
+  scale_y_continuous(limits=c(50000, 840000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(100000, 800000, 100000)) +
+
+# set up the panel
+theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Average RoH length (Mbp)")
+
+# plot violin per group
+aveRoh = aveRoh +  
+  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
+  
+  # add scatter points per group
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) 
+  
+# perform wilcox tests to compare groups
+aveRoh = aveRoh + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(600000, 800000), size=3, colour="gray20") #+
+  
+  #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
+
+aveRoh
+  
+
+```
+
+
+
+
+#### Visualize maximum RoH length in the 10 largest scaffolds
+
+Use the function written before to customize the y axis here too
+
+```{r}
+maxRoh = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
+       aes(time_window, max_RoH_len)) +
+  
+  # customize the y axis scale
+  scale_y_continuous(limits=c(100000, 16000000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(1000000, 16000000, 2000000)) +
+
+# set up the panel
+theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Maximum RoH length (Mbp)")
+
+
+maxRoh = maxRoh +  
+  # create boxplots
+  geom_boxplot(aes(colour=time_window), fill="gray60", lwd=.5, alpha=.3) +
+  
+  # add scatter points per group
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # run the wilcox tests to compare groups
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(14000000, 15000000), size=3, colour="gray20") #+
+  
+  #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
+  
+maxRoh
+
+```
+
+
+
+
+### Make composite figure for genomic erosion stats
+
+```{r}
+erosion = ggarrange(gw_het + theme(axis.text.x=element_blank()), 
+                    fRoh + theme(axis.text.x=element_blank()), 
+                    aveRoh + theme(axis.text.x=element_text(size=10)), 
+                    maxRoh + theme(axis.text.x=element_text(size=10)), 
+                    nrow=2, ncol=2, align="v", labels=c( "A", "B" , "C", "D"))
+
+erosion
+```
+
+
+```{r}
+pdf("WR_v4_GenomicErosionFig.pdf", useDingbats = F)
+erosion
+dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Visualize min RoH length in the 10 largest scaffolds
+
+```{r}
+ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
+       aes(time_window, min_RoH_len)) +
+
+
+# set up the panel
+theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80'))) +
+
+# plot violin per group
+geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
+  
+  # add scatter points per group
+  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
+  
+  stat_summary(fun=mean, fun.min = function (min_RoH_len) mean(min_RoH_len) - sd(min_RoH_len), 
+               fun.max = function(min_RoH_len) mean(min_RoH_len) + sd(min_RoH_len), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less")) +
+  
+  geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
+  
+
+```
+
+
+
+## Extra analyses
+
+
+### Results of ngsF (inbreeding coefficients per group)
+
+```{r}
+data$time_window=factor(data$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+```{r}
+# plot het values per time window
+indFplot = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF09'), 
+              aes(time_window, F_ngsF)) + 
+  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
+                     panel.grid.major=(element_line(size=.12, colour='gray80')))
+  
+  
+# plot violin per group
+indFplot = indFplot +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
+  
+  # add scatter points per group
+  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
+  
+  stat_summary(fun=mean, fun.min = function (F_ngsF) mean(F_ngsF) - sd(F_ngsF), 
+               fun.max = function(F_ngsF) mean(F_ngsF) + sd(F_ngsF), geom = "pointrange" , size=.12, stroke=.4, col="black") +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), label.y = c(0.00027, 0.00020), size=2.5) #+
+  
+  # embellish
+  #scale_y_continuous(limits=c(0.00007, 0.00030),labels = function(x) format(x, scientific = FALSE)) +
+  
+  
+#  labs(x=NULL, y="Inbreeding coefficient") + geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF09'), aes(label=lab_ID), segment.size=.15, size=2)
+
+indFplot
+```
+
+
+
+
+### GW het after downsampling at 5x all samples
+
+```{r}
+data$time_window=factor(data$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+```{r}
+# plot het values per time window
+gw_hetDS = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(time_window, GW_het_DS_corrected)) + 
+  theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Genome-wide heterozygosity (tv)") +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+  
+  
+# plot violin per group
+gw_hetDS = gw_hetDS +  
+  geom_violin(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
+  
+  # add scatter points per group
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='gray30', width=.16, lwd=.4)
+  
+
+gw_hetDS = gw_hetDS + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"))   + geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
+
+gw_hetDS
+```
+
+
+
+### Het estimates in regions annotated as exons
+
+```{r}
+# plot het values per time window
+exon_het = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(time_window, exon_het_GL2_5x_ErTv)) + 
+  theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Exon heterozygosity (tv)") +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+  
+  
+# plot violin per group
+exon_het = exon_het +  
+  geom_violin(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
+  
+  # add scatter points per group
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='gray30', width=.16, lwd=.4)
+  
+exon_het = exon_het + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"))
+
+exon_het
+```
+
+
+
+
+
+
+
+
+
+
+
+

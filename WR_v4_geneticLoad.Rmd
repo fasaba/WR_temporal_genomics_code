@@ -76,19 +76,27 @@ snpeff$time_window=factor(snpeff$time_window,levels=c("SWRpre", "SWRpost"))
 ```{r}
 # the hom ratio
 homratio1 = ggplot(snpeff, aes(time_window, hom_ratio)) + theme_bw() +
-  geom_boxplot(aes(group=time_window, colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
+  
+  # plot distribution and points
+  geom_violin(aes(group=time_window, colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
   geom_point(aes(time_window, hom_ratio, group=time_window, colour=time_window), shape=17, cex=2, alpha=.7) +
   
+  # add colour scale
   scale_color_manual(values= (c("royalblue4", "steelblue3"))) +
   
+  # format axes and labels
   scale_y_continuous(labels = scales::percent_format(accuracy = 0.1), limits=c(0.013, 0.027), breaks=seq(0.014, 0.026, 0.004)) +
-  
   labs(y="LoF/synonymous ratio at homozygous derived sites", x=NULL) +
   theme(legend.position = "none", axis.text.x=element_text(size=12)) +
   
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), label.y = c(0.026, 0.027)) +
+  # add stats and an unpaired wilcox test to compare the medians
+  stat_summary(fun=median, geom="crossbar", colour='gray30', width=.12, lwd=.4) +
   
-  geom_text_repel(data=subset(snpeff, time_window!="SWRpost"), aes(label=sample), box.padding=.5, segment.size=.15, size=3, force = 20, colour="grey20", xlim=c(0,"SWRpre"), direction="x")
+  # run comparison with wilcox test
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), label.y = c(0.026, 0.027), colour="gray20") +
+  
+  # add labels to SWRpre
+  geom_text_repel(data=subset(snpeff, time_window!="SWRpost"), aes(label=sample), colour="grey20", size=3, point.padding=1, box.padding=1, direction="x", segment.size=.2)
 
 homratio1
 
@@ -107,7 +115,7 @@ snpeff$group=factor(snpeff$group,levels=c("SWRpre Namibia","SWRpre South Africa"
 ```{r}
 # the hom ratio
 homratio2 = ggplot(snpeff, aes(group, hom_ratio)) + theme_bw() +
-  geom_boxplot(aes(group=group, colour=group), fill="gray70", lwd=.5, alpha=.4) +
+  geom_violin(aes(group=group, colour=group), fill="gray70", lwd=.5, alpha=.4) +
   geom_jitter(aes(group, hom_ratio, group=group, colour=group), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
   
   scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
@@ -144,8 +152,8 @@ homratio3 = ggplot(snpeff, aes(cluster, hom_ratio)) + theme_bw() +
   labs(y="LoF/synonymous ratio at homozygous derived sites", x=NULL) +
   theme(legend.position = "none", axis.text.x=element_text(angle=30, hjust=1, size=12)) +
   
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre West", "SWRpre East")), method.args = list(alternative = "greater"), label.y = c(0.026, 0.027)) +
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpost wild", "SWRpost captive")), method.args = list(alternative = "two.sided")) 
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre West", "SWRpre East")), method.args = list(alternative = "greater"), label.y = c(0.026)) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpost wild", "SWRpost captive")), method.args = list(alternative = "two.sided"), label.y = c(0.024)) 
 
   #geom_text_repel(data=snpeff, aes(label=sample), segment.size=.15, size=2)
 
@@ -161,9 +169,8 @@ homratio3
 homratio_fig = ggarrange(homratio1, 
           homratio3 + theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
-                     axis.title.y = element_blank(),
-                     plot.margin = margin(r = 1, l = 1)), 
-          nrow=1, ncol=2, align="h")
+                     axis.title.y = element_blank()), 
+          nrow=1, ncol=2, align="h", widths=c(1.2, 1), labels=c("A", "B"))
 
 homratio_fig
 ```
