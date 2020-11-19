@@ -66,7 +66,7 @@ Visualizing the error rates (all types) per sample
 
 ```{r}
 E = ggplot(smalldataM, aes(ID, value, fill=variable, colour=variable)) + geom_bar(position = position_dodge(0.6), stat = "identity", width=0.4, size=0.2) + theme_bw() +
-  theme(axis.text.x=element_text(angle=80, hjust=1), legend.key.size= unit(4, "mm"), legend.title=element_blank()) +
+  theme(axis.text.x=element_text(angle=80, hjust=1, size=8), legend.key.size= unit(4, "mm"), legend.title=element_blank()) +
   ylab("Error rate") + xlab("Sample name") + scale_x_discrete(labels = smalldataM$sample_name)
 
 E
@@ -75,7 +75,7 @@ E
 
 Save the plot
 ```{r eval=FALSE, include=FALSE}
-pdf("WR_v4_ErrorRates.pdf", height=5, width=9, useDingbats = F)
+pdf("WR_v4_FigS3_ErrorRates.pdf", useDingbats = F)
 E
 dev.off()
 ```
