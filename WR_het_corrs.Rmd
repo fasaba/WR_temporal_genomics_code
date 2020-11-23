@@ -27,7 +27,7 @@ library(gridExtra)
 
 Reading in file containing metadata and genomic diversity metrics 
 ```{r}
-data = read.csv("WR_TableS1_v4.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+data = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 ```
 
 
@@ -53,9 +53,9 @@ C4 = ggscatter(data, x = "gw_het_GL2_3x", y = "gw_het_GL2",
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson") + ggtitle("GWhet with GL2 and 3x min VS GL2")
 
-C5 = ggscatter(data, x = "gw_het_GL2_3x", y = "gw_het_GL1_raw", 
+C5 = ggscatter(data, x = "gw_het_GL2_3x", y = "gw_het_GL2_5x", 
           add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson") + ggtitle("GWhet with GL2 and 3x min VS GL1")
+          cor.coef = TRUE, cor.method = "pearson") + ggtitle("GWhet with GL2 and 3x min VS GL2 and 5x min")
 
 C6 = ggscatter(data, x = "gw_het_GL2_3x", y = "gw_het_GL1_corrected", 
           add = "reg.line", conf.int = TRUE, 
@@ -84,13 +84,14 @@ dev.off
 ### Differences between different estimates of het across samples
 
 ```{r}
-dataH = data[, c("lab_ID", "gw_het_GL1_raw", "gw_het_GL1_corrected", "gw_het_GL2", "gw_het_GL2_3x", "gw_het_GL2_5x", "gw_het_GL2_3x_ErTv" )]
+dataH = data[, c("lab_ID", "gw_het_GL1_raw", "gw_het_GL1_corrected", "gw_het_GL2", "gw_het_GL2_3x", "gw_het_GL2_5x", "gw_het_GL2_3x_ErTv", "gw_het_GL2_5x_ErTv" )]
 dataM = reshape2::melt(dataH, id.vars=c("lab_ID"))
 head(dataM)
 ```
 
 ```{r}
 Hs = ggplot(dataM, aes(lab_ID, value, colour=variable, shape=variable)) + geom_point() + theme_bw() +
+  scale_shape_manual(values=c(15, 16, 17, 18, 19, 20, 21)) +
   theme(axis.text.x=element_text(angle=80, hjust=1), legend.position = "top", legend.title=element_blank()) + 
   guides(colour=guide_legend(ncol=2)) +
   ylab("Het estimate")
@@ -298,9 +299,26 @@ DSdataAll$doc_filter <- factor(DSdataAll$doc_filter, levels=c("GL1-no_filter","G
 Visualise
 ```{r}
 DS = ggplot(data=DSdataAll, aes(depth, het, colour=sample)) + geom_point(aes(shape=depth_category)) + geom_line() + theme_bw() +
-  ylim(limits=c(0,4e-4)) +
-  xlim(limits=c(0,23)) +
+  xlim(limits=c(0,23)) + 
+  labs(x="Depth of coverage", y="Genome-wide heterozygosity", shape="Depth category", colour="Sample") +
   facet_wrap(~ doc_filter, nrow=2, ncol=2)
+
+DS
+```
+
+
+Find the colours in the default palette used by ggplot
+```{r}
+pdata = ggplot_build(DS)$data[[1]]
+
+levels(as.factor(pdata$colour))
+
+```
+
+Assign labels and colour codes to the 13 samples using the sample name instead of the lab ID
+```{r}
+DS = DS + scale_colour_manual(values=c("#00ACFC", "#00BBDA", "#00BE70", "#00C1AB", "#24B700", "#8B93FF", "#8CAB00", "#BE9C00", "#D575FE", "#E18A00", "#F8766D", "#F962DD", "#FF65AC"), 
+                              labels=c("ZA1869.1", "CD1912.2", "CD1911.1", "SD1905.4", "ZA-un.1", "ZA1845.2", "UG1905.2", "cap2008.1", "cap2011.3", "ZA1968.1", "ZA1958.1", "SD1973.1", "SD1972.3")) 
 
 DS
 ```
@@ -308,7 +326,7 @@ DS
 
 
 ```{r}
-pdf("WR_GWhet_DSexp_comparison.pdf", height=7, width=9, useDingbats = F)
+pdf("WR_v4_FigS6_DSexp.pdf", height=5, useDingbats = F)
 DS
 dev.off
 ```
@@ -317,246 +335,22 @@ dev.off
 
 
 
-######################################################################################
-
-## Temporal comparisons with the different Het estimates
-
-
-#### Individual heterozygosity across groups with different estimates of Het. Comparison
-
-<!-- ```{r} -->
-<!--   A = ggplot(data, aes(time_window, uncorrected_gw_het)) + geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) + ggtitle(label="GWhet with GL1") + -->
-<!--   geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + -->
-<!--    theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title=element_text(size=7), -->
-<!--                       panel.grid.major=(element_line(size=.12, colour='gray80'))) + -->
-<!--    stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2"))) -->
-<!--  #+ geom_text_repel(data=data, aes(label=sample_name), segment.size=.15, size=2) -->
-
-
-<!--  B = ggplot(data, aes(time_window, corrected_gw_het)) + geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) + ggtitle(label="GWhet with GL1 corrected") + -->
-<!--    geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + -->
-<!--    theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title=element_text(size=7), -->
-<!--                       panel.grid.major=(element_line(size=.12, colour='gray80'))) + -->
-<!--      stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2"))) -->
-<!--  #+ geom_text_repel(data=data, aes(label=sample_name), segment.size=.15, size=2) -->
-
-
-
-<!--  C = ggplot(data, aes(time_window, gw_het_GL2)) + geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) + ggtitle(label="GWhet with GL2") + -->
-<!--    geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + -->
-<!--    theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title=element_text(size=7), -->
-<!--                       panel.grid.major=(element_line(size=.12, colour='gray80'))) + -->
-<!--      stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2"))) -->
-<!--  #+ geom_text_repel(data=data, aes(label=sample_name), segment.size=.15, size=2) -->
-
-
-<!--  D = ggplot(data, aes(time_window, gw_het_GL2_3x)) + geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) + ggtitle(label="GWhet with GL2 and 3x min DoC") + -->
-<!--    geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + -->
-<!--    theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title=element_text(size=7), -->
-<!--                       panel.grid.major=(element_line(size=.12, colour='gray80'))) + -->
-<!--      stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2"))) + -->
-<!--    geom_text_repel(data=data, aes(label=lab_ID), segment.size=.15, size=2) -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!--  A -->
-<!--  B -->
-<!--  C -->
-<!--  D -->
-<!-- ``` -->
-
-<!-- ```{r eval=FALSE, include=FALSE} -->
-<!--  pdf("WR_Het_GLcomparisons.pdf", height=7, useDingbats = F) -->
-<!--  plot_grid(A, B, C, D, nrow=2, ncol=2, labels=c('A','B','C','D')) -->
-<!--  dev.off -->
-<!-- ``` -->
-
-
-
-### Het comparisons between temporal groups with the (so far) best Het estimate: GL2, <3x ErTv (corrected)
-
-```{r}
-# plot het values per time window
-gw_het = ggplot(data, aes(time_window, gw_het_GL2_3x_ErTv)) + 
-  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
-                     panel.grid.major=(element_line(size=.12, colour='gray80')))
-  
-  
-# plot violin per group
-gw_het = gw_het +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
-  
-  # add scatter points per group
-  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
-  
-  # add colours and filling colours
-  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
-  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
-  
-  # add stats and an unpaired wilcox test to compare the medians
-  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
-  
-  stat_summary(fun=mean, fun.min = function (gw_het_GL2_3x_ErTv) mean(gw_het_GL2_3x_ErTv) - sd(gw_het_GL2_3x_ErTv), 
-               fun.max = function(gw_het_GL2_3x_ErTv) mean(gw_het_GL2_3x_ErTv) + sd(gw_het_GL2_3x_ErTv), geom = "pointrange" , size=.12, stroke=.4, col="black") +
-  
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons= list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), label.y=c(0.00024, 0.00020), size=2.5) +
-  
-  # embellish
-  scale_y_continuous(limits=c(0.00007, 0.00025),labels = function(x) format(x, scientific = FALSE)) +
-  
-  
-  labs(x=NULL, y="Genome-wide heterozygosity (tv)") + geom_text_repel(data=data, aes(label=lab_ID), segment.size=.15, size=2)
-
-gw_het
-```
 
 
 
 
-#### Now excluding the 4 samples of average depth of coverage <5x
-
-```{r}
-# plot het values per time window
-gw_het = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(time_window, gw_het_GL2_3x_ErTv)) + 
-  theme_bw() + theme(legend.position = "none", axis.text=element_text(size=7, colour='gray10'), axis.title.y=element_text(size=7), 
-                     panel.grid.major=(element_line(size=.12, colour='gray80')))
-  
-  
-# plot violin per group
-gw_het = gw_het +  geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
-  
-  # add scatter points per group
-  geom_jitter(colour='gray40', shape=16, position=position_jitter(0.11), cex=.6, alpha=.7) + 
-  
-  # add colours and filling colours
-  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
-  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
-  
-  # add stats and an unpaired wilcox test to compare the medians
-  stat_summary(fun=median, geom="crossbar", colour='black', width=.12, lwd=.3) +
-  
-  stat_summary(fun=mean, fun.min = function (gw_het_GL2_3x_ErTv) mean(gw_het_GL2_3x_ErTv) - sd(gw_het_GL2_3x_ErTv), 
-               fun.max = function(gw_het_GL2_3x_ErTv) mean(gw_het_GL2_3x_ErTv) + sd(gw_het_GL2_3x_ErTv), geom = "pointrange" , size=.12, stroke=.4, col="black") +
-  
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWR1", "NWR2"), c("SWR1", "SWR2")), method.args = list(alternative = "greater"), label.y = c(0.00024, 0.00020), size=2.5) +
-  
-  # embellish
-  scale_y_continuous(limits=c(0.00007, 0.00025),labels = function(x) format(x, scientific = FALSE)) +
-  
-  
-  labs(x=NULL, y="Genome-wide heterozygosity (tv)") + geom_text_repel(data=data, aes(label=lab_ID), segment.size=.15, size=2)
-
-gw_het
-```
 
 
 
-### GW het stats and delta estimators with the subsetted dataset
-
-
-Summary statistics for gw_het across the 4 groups
-```{r}
-# for all samples
-data %>%
-  group_by(time_window) %>%
-  summarize(min=min(gw_het_GL2_3x_ErTv), max=max(gw_het_GL2_3x_ErTv), median=median(gw_het_GL2_3x_ErTv))
-
-# excluding those of depth of coverage below 4x
-data %>%
-  subset(depth_of_coverage > 5) %>%
-  group_by(time_window) %>%
-  summarize(min=min(gw_het_GL2_3x_ErTv), max=max(gw_het_GL2_3x_ErTv), median=median(gw_het_GL2_3x_ErTv))
-```
-
-
-Make a subset of the data without the low depth samples for further statistical testing
-```{r}
-data5x = data %>%
-  subset(depth_of_coverage > 5)
-```
 
 
 
-### Statistical comparison of gw_het median between pre- and post-bottleneck samples for each subspecies
-
-```{r}
-ggplot(data5x, aes(gw_het_GL2_3x_ErTv, group=time_window, fill=time_window)) + geom_histogram(alpha=0.5, binwidth=0.000005, position = "identity") #+ geom_density(alpha=0.2)
-```
 
 
 
-Making a dataframe per group (subspecies and time window)
-```{r}
-nwr1_5x = data5x[data5x$time_window == "NWR1",]
-nwr2_5x = data5x[data5x$time_window == "NWR2",]
-swr1_5x = data5x[data5x$time_window == "SWR1",]
-swr2_5x = data5x[data5x$time_window == "SWR2",]
-```
 
 
-Comparison NWR1-NWR2. Testing whether Het in NWR2 is significantly smaller than that of NWR1
-```{r}
-# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
-wilcox.test(nwr1_5x$gw_het_GL2_3x_ErTv, nwr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
 
-# the left test reports if the distribution of Het of NWR1 is to the left of that of NWR2 (i.e. NWR1 smaller than NWR2)
-wilcox.test(nwr1_5x$gw_het_GL2_3x_ErTv, nwr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) 
-
-# the right test reports is NWR1 is to the right (larger) than NWR2 Het distribution
-wilcox.test(nwr1_5x$gw_het_GL2_3x_ErTv, nwr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
-```
-
-
-Comparison SWR1-SWR2
-```{r}
-# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
-wilcox.test(swr1_5x$gw_het_GL2_3x_ErTv, swr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
-
-# the left test reports if the distribution of Het of SWR1 is to the left of that of SWR2 (i.e. SWR1 smaller than SWR2)
-wilcox.test(swr1_5x$gw_het_GL2_3x_ErTv, swr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less"))
-
-# the right test reports is SWR1 is to the right (larger) than SWR2 Het distribution
-wilcox.test(swr1_5x$gw_het_GL2_3x_ErTv, swr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
-#wilcox.test(swr2_5x$gw_het_GL2_3x_ErTv, swr1_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) #equivalent test
-```
-
-##################
-
-#### Statistical tests for the whole sample set (n=52)
-
-Making a dataframe per group (subspecies and time window)
-```{r}
-nwr1 = data[data$time_window == "NWR1",]
-nwr2 = data[data$time_window == "NWR2",]
-swr1 = data[data$time_window == "SWR1",]
-swr2 = data[data$time_window == "SWR2",]
-```
-
-
-Comparison NWR1-NWR2. Testing whether Het in NWR2 is significantly smaller than that of NWR1
-```{r}
-# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
-wilcox.test(nwr1$gw_het_GL2_3x_ErTv, nwr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
-
-# the left test reports if the distribution of Het of NWR1 is to the left of that of NWR2 (i.e. NWR1 smaller than NWR2)
-wilcox.test(nwr1$gw_het_GL2_3x_ErTv, nwr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) 
-
-# the right test reports is NWR1 is to the right (larger) than NWR2 Het distribution
-wilcox.test(nwr1$gw_het_GL2_3x_ErTv, nwr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
-```
-
-
-Comparison SWR1-SWR2
-```{r}
-# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
-wilcox.test(swr1$gw_het_GL2_3x_ErTv, swr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
-
-# the left test reports if the distribution of Het of SWR1 is to the left of that of SWR2 (i.e. SWR1 smaller than SWR2)
-wilcox.test(swr1$gw_het_GL2_3x_ErTv, swr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less"))
-
-# the right test reports is SWR1 is to the right (larger) than SWR2 Het distribution
-wilcox.test(swr1$gw_het_GL2_3x_ErTv, swr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
-#wilcox.test(swr2_5x$gw_het_GL2_3x_ErTv, swr1_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) #equivalent test
-```
 
 
 

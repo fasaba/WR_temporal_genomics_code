@@ -44,6 +44,14 @@ SWRpostH = datassHet[datassHet$time_window == "SWRpost",]
 ```
 
 
+```{r}
+dim(NWRpreH)
+dim(NWRpostH)
+dim(SWRpreH)
+dim(SWRpostH)
+
+```
+
 ### Median comparisons for GW Het
 
 #### NWR
@@ -66,7 +74,9 @@ datassHet$time_window=factor(datassHet$time_window,levels=c("NWRpre","NWRpost","
 ```{r}
 datassHet %>%
   group_by(time_window) %>%
-  summarize(min=min(gw_het_GL2_5x_ErTv), max=max(gw_het_GL2_5x_ErTv), median=median(gw_het_GL2_5x_ErTv))
+  #summarize(min=min(gw_het_GL2_5x_ErTv), max=max(gw_het_GL2_5x_ErTv), median=median(gw_het_GL2_5x_ErTv))
+  summarize(median=median(gw_het_GL2_5x_ErTv))
+  
 ```
 
 
@@ -87,18 +97,26 @@ SWRpostF = datassF[datassF$time_window == "SWRpost",]
 
 ```
 
+```{r}
+dim(NWRpreF)
+dim(NWRpostF)
+dim(SWRpreF)
+dim(SWRpostF)
+
+```
+
 
 ### Median comparisons for FRoH
 
 #### NWR
 Group comparison
 ```{r}
-wilcox.test(NWRpreF$Froh_10scf, NWRpostF$Froh_10scf, paired=F, alternative = "less")
+wilcox.test(NWRpreF$Froh, NWRpostF$Froh, paired=F, alternative = "less")
 ```
 
 #### SWR
 ```{r}
-wilcox.test(SWRpreF$Froh_10scf, SWRpostF$Froh_10scf, paired=F, alternative = "less")
+wilcox.test(SWRpreF$Froh, SWRpostF$Froh, paired=F, alternative = "less")
 ```
 
 
@@ -112,7 +130,7 @@ datassF$time_window=factor(datassF$time_window, levels=c("NWRpre","NWRpost","SWR
 ```{r}
 datassF %>%
   group_by(time_window) %>%
-  summarize(min=min(Froh_10scf), max=max(Froh_10scf), median=median(Froh_10scf))
+  summarize(min=min(Froh), max=max(Froh), median=median(Froh))
 ```
 
 
@@ -145,8 +163,122 @@ datassF %>%
 
 
 
+### Median comparisons for maximum RoH length
+
+#### NWR
+Group comparison
+```{r}
+wilcox.test(NWRpreF$max_RoH_len, NWRpostF$max_RoH_len, paired=F, alternative = "less")
+```
+
+#### SWR
+```{r}
+wilcox.test(SWRpreF$max_RoH_len, SWRpostF$max_RoH_len, paired=F, alternative = "less")
+```
 
 
+
+### Delta estimators for FRoH
+Delta estimators
+```{r}
+datassF$time_window=factor(datassF$time_window, levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+```{r}
+datassF %>%
+  group_by(time_window) %>%
+  summarize(min=min(max_RoH_len), max=max(max_RoH_len), median=median(max_RoH_len))
+```
+
+
+
+#################################################################################################################################
+
+
+## Toy code for preliminary tests
+
+
+### Statistical comparison of gw_het median between pre- and post-bottleneck samples for each subspecies
+
+```{r}
+ggplot(data5x, aes(gw_het_GL2_3x_ErTv, group=time_window, fill=time_window)) + geom_histogram(alpha=0.5, binwidth=0.000005, position = "identity") #+ geom_density(alpha=0.2)
+```
+
+
+
+Making a dataframe per group (subspecies and time window)
+```{r}
+nwr1_5x = data5x[data5x$time_window == "NWR1",]
+nwr2_5x = data5x[data5x$time_window == "NWR2",]
+swr1_5x = data5x[data5x$time_window == "SWR1",]
+swr2_5x = data5x[data5x$time_window == "SWR2",]
+```
+
+
+Comparison NWR1-NWR2. Testing whether Het in NWR2 is significantly smaller than that of NWR1
+```{r}
+# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
+wilcox.test(nwr1_5x$gw_het_GL2_3x_ErTv, nwr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
+
+# the left test reports if the distribution of Het of NWR1 is to the left of that of NWR2 (i.e. NWR1 smaller than NWR2)
+wilcox.test(nwr1_5x$gw_het_GL2_3x_ErTv, nwr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) 
+
+# the right test reports is NWR1 is to the right (larger) than NWR2 Het distribution
+wilcox.test(nwr1_5x$gw_het_GL2_3x_ErTv, nwr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
+```
+
+
+Comparison SWR1-SWR2
+```{r}
+# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
+wilcox.test(swr1_5x$gw_het_GL2_3x_ErTv, swr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
+
+# the left test reports if the distribution of Het of SWR1 is to the left of that of SWR2 (i.e. SWR1 smaller than SWR2)
+wilcox.test(swr1_5x$gw_het_GL2_3x_ErTv, swr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less"))
+
+# the right test reports is SWR1 is to the right (larger) than SWR2 Het distribution
+wilcox.test(swr1_5x$gw_het_GL2_3x_ErTv, swr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
+#wilcox.test(swr2_5x$gw_het_GL2_3x_ErTv, swr1_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) #equivalent test
+```
+
+##################
+
+#### Statistical tests for the whole sample set (n=52)
+
+Making a dataframe per group (subspecies and time window)
+```{r}
+nwr1 = data[data$time_window == "NWR1",]
+nwr2 = data[data$time_window == "NWR2",]
+swr1 = data[data$time_window == "SWR1",]
+swr2 = data[data$time_window == "SWR2",]
+```
+
+
+Comparison NWR1-NWR2. Testing whether Het in NWR2 is significantly smaller than that of NWR1
+```{r}
+# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
+wilcox.test(nwr1$gw_het_GL2_3x_ErTv, nwr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
+
+# the left test reports if the distribution of Het of NWR1 is to the left of that of NWR2 (i.e. NWR1 smaller than NWR2)
+wilcox.test(nwr1$gw_het_GL2_3x_ErTv, nwr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) 
+
+# the right test reports is NWR1 is to the right (larger) than NWR2 Het distribution
+wilcox.test(nwr1$gw_het_GL2_3x_ErTv, nwr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
+```
+
+
+Comparison SWR1-SWR2
+```{r}
+# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
+wilcox.test(swr1$gw_het_GL2_3x_ErTv, swr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
+
+# the left test reports if the distribution of Het of SWR1 is to the left of that of SWR2 (i.e. SWR1 smaller than SWR2)
+wilcox.test(swr1$gw_het_GL2_3x_ErTv, swr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less"))
+
+# the right test reports is SWR1 is to the right (larger) than SWR2 Het distribution
+wilcox.test(swr1$gw_het_GL2_3x_ErTv, swr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
+#wilcox.test(swr2_5x$gw_het_GL2_3x_ErTv, swr1_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) #equivalent test
+```
 
 
 

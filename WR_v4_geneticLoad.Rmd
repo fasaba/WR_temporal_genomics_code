@@ -39,6 +39,7 @@ snpeff = read.csv("snpeff_output.csv", h=T, fill=T, stringsAsFactors=T, fileEnco
 snpeff$group=factor(snpeff$group,levels=c("SWRpre Namibia","SWRpre South Africa","SWRpost South Africa", "SWRpost captive"))
 ```
 
+Plot the number of hom and het derived sites
 ```{r}
 ggplot(snpeff, aes(lab_ID, hom_derived)) + 
   geom_col(aes(group=cluster, fill=cluster)) +
@@ -115,7 +116,7 @@ snpeff$group=factor(snpeff$group,levels=c("SWRpre Namibia","SWRpre South Africa"
 ```{r}
 # the hom ratio
 homratio2 = ggplot(snpeff, aes(group, hom_ratio)) + theme_bw() +
-  geom_violin(aes(group=group, colour=group), fill="gray70", lwd=.5, alpha=.4) +
+  geom_boxplot(aes(group=group, colour=group), fill="gray70", lwd=.5, alpha=.4) +
   geom_jitter(aes(group, hom_ratio, group=group, colour=group), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
   
   scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
@@ -178,10 +179,139 @@ homratio_fig
 
 
 ```{r}
-pdf("WR_v4_SWRgeneticLoad_v2.pdf", height=5, useDingbats = F)
+pdf("WR_v4_Fig6_GeneticLoad.pdf", height=5, useDingbats = F)
 homratio_fig
 dev.off()
 ```
+
+
+## Comparison of genomic metrics in SWRpre of interest
+
+Open metadata and genomic metrics table
+```{r}
+md = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+Subset the table to keep only the samples of interest
+```{r}
+swrpre
+```
+
+```{r}
+swrpre = subset(md, sample_name == "NA1845.1" | sample_name == "NA1857.1" |  sample_name == "ZA-un.1" | sample_name == "NA1856.1" | sample_name == "ZA1869.1")
+```
+
+
+Create a cluster variable to separate the West and the East samples
+```{r}
+swrpre$Cluster = c("East", "West", "East", "West", "West")
+```
+
+
+Order the levels of the Cluster variable for plotting
+```{r}
+swrpre$sample_name = with(swrpre, factor(sample_name, levels=sample_name[order(Cluster)]))
+```
+
+
+### GW Het in SWRpre samples of interest
+
+```{r}
+swrpreH = ggplot(swrpre, aes(sample_name, gw_het_GL2_5x_ErTv, colour=Cluster, fill=Cluster)) + theme_bw() +
+  geom_col(alpha=.9) +
+  labs(x="Sample name", y=expression("Genome-wide heterozygosity")) +
+  scale_fill_manual(values=c("royalblue4", "#4169e1")) +
+  scale_colour_manual(values=c("royalblue4", "#4169e1")) +
+  coord_flip()
+
+swrpreH
+```
+
+
+### Froh in SWRpre samples of interest
+
+```{r}
+swrpreF = ggplot(swrpre, aes(sample_name, Froh, fill=Cluster, colour=Cluster)) + theme_bw() +
+  geom_col(alpha=.9) +
+  labs(x="Sample name", y=expression("F"["RoH"])) +
+  scale_fill_manual(values=c("royalblue4", "#4169e1")) +
+  scale_colour_manual(values=c("royalblue4", "#4169e1")) +
+  coord_flip() 
+
+swrpreF
+```
+
+
+
+
+### The genetic load in SWRpre of interest
+
+Plot the genetic load in the SWRpre of interest
+
+FINISH
+
+
+```{r}
+swrpreG = ggplot(data=subset(snpeff, sample == "NA1845.1" | sample == "NA1857.1" |  sample == "ZA-un.1" | sample == "NA1856.1" | sample == "ZA1869.1"), 
+                 aes(sample, hom_ratio), fill=cluster, colour=cluster, group=cluster) + theme_bw() +
+  geom_col(alpha=.9) +
+  labs(x="Sample name", y="LoF/synonymous ratio at homozygous derived sites") +
+  scale_fill_manual(values=c("royalblue4", "#4169e1")) +
+  scale_colour_manual(values=c("royalblue4", "#4169e1")) +
+  coord_flip() 
+
+
+swrpreG
+```
+
+
+
+
+
+
+```{r}
+swrpreG = ggplot(snpeff, aes(sample_name, hom_ratio)) + theme_bw() +
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+figS9 = ggarrange(swrpreH + guides(colour=F, fill=F), swrpreF + theme(axis.text.y=element_blank(), axis.title.y=element_blank(), axis.ticks.y=element_blank()), nrow=1, ncol=2, align="h")
+figS9
+```
+
+
+```{r}
+pdf("WR_v4_FigS9_SWRpre.pdf", height=5, useDingbats = F)
+homratio_fig
+dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,0 +1,183 @@
+---
+title: "WR_v4_relatedness"
+author: "Fátima S. Barreiro"
+date: "November 23, 2020"
+output: html_document
+---
+
+Load required libraries
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(ggplot2)
+library(cowplot)
+library(ggrepel)
+library(reshape2)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+require(scales)
+library(ggpubr)
+library(tidyr)
+library(PairedData)
+library(gridExtra)
+```
+
+
+
+Open tables of pairwise relatedness (output of ngsRelate) per subspecies
+```{r}
+nwr = read.table("NWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.res", header=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+swr = read.table("SWR.27I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.res", header=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+
+
+### Visualize the pairwise relatedness coefficients for each subspecies
+
+#### NWR
+```{r}
+ggplot(nwr, aes(R1, R0)) + geom_point (alpha=.8, color="darkorange", size=2) + theme_bw() + labs(x="R1", y="R0", title="NWR pairwise relatedness among samples") 
+  #scale_x_continuous(limits=c(0,1))
+
+ggplot(nwr, aes(R1, KING)) + geom_point (alpha=.8, color="darkorange", size=2) + theme_bw() + labs(x="R1", y="KING", title="NWR pairwise relatedness among samples") 
+  #scale_x_continuous(limits=c(0,1))
+```
+One related pair in NWR.
+
+
+
+#### SWR
+```{r}
+ggplot(swr, aes(R1, R0)) + geom_point (alpha=.8, color="royalblue4", size=2) + theme_bw() + labs(x="R1", y="R0", title="SWR pairwise relatedness among samples") 
+  #scale_x_continuous(limits=c(0,1))
+
+ggplot(swr, aes(R1, KING)) + geom_point (alpha=.8, color="royalblue4", size=2) + theme_bw() + labs(x="R1", y="KING", title="SWR pairwise relatedness among samples") 
+  #scale_x_continuous(limits=c(0,1))
+```
+Two related pairs in SWR.
+
+
+
+### Find out who the relatives are in each subspecies (outlier pairs in the plots above)
+```{r}
+nwr_rels = subset(nwr, R1 > 0.6)
+
+swr_rels = subset(swr, R1 > 10)
+
+# these lines represent the pairs of samples with signal of relatedness
+head(nwr_rels)
+head(swr_rels)
+```
+
+
+
+
+### Find the sample names (not lab IDs) corresponding to those related pairs
+
+Open metadata and genomic metrics table
+```{r}
+md = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+
+```{r}
+md[md$lab_ID %in% as.vector(nwr_rels$ida),]
+md[md$lab_ID %in% as.vector(nwr_rels$idb),]
+
+md[md$lab_ID %in% as.vector(swr_rels$ida),]
+md[md$lab_ID %in% as.vector(swr_rels$idb),]
+
+
+```
+
+
+Change old 'sample_name' by the new_IDs for plotting
+```{r}
+# NWR
+nwr$ida <- replace(as.character(nwr$ida), nwr$ida == "mwr_TG0450", "CD-un.1")
+nwr$idb <- replace(as.character(nwr$idb), nwr$idb == "mwr_TG0458", "CD-un.2")
+
+
+# SWR
+## pair 1
+swr$ida <- replace(as.character(swr$ida), swr$ida == "mwr_TGF02", "un1856.1")
+swr$idb <- replace(as.character(swr$idb), swr$idb == "mwr_TGF03", "ZA-un.1")
+
+swr$ida <- replace(as.character(swr$ida), swr$ida == "mwr_TGF04", "ZA1845.2")
+swr$idb <- replace(as.character(swr$idb), swr$idb == "mwr_TGF09", "ZA1842.1")
+
+```
+
+
+```{r}
+nwr_rels = subset(nwr, R1 > 0.6)
+
+swr_rels = subset(swr, R1 > 10)
+
+# these lines represent the pairs of samples with signal of relatedness
+head(nwr_rels)
+head(swr_rels)
+```
+
+
+### Plot again now with the labels on the related individuals
+
+#### NWR
+```{r}
+nwr0 = ggplot(nwr, aes(R1, R0)) + geom_point (alpha=.8, color="darkorange", size=2) + theme_bw() + labs(x="R1", y="R0") +
+  geom_text_repel(data=subset(nwr, R1 > 0.6), aes(label=ida), segment.size=.15, size=2, colour="gray20", fontface="bold", point.padding=.5) +
+  geom_text_repel(data=subset(nwr, R1 > 0.6), aes(label=idb), segment.size=.15, size=2, colour="gray20", fontface="bold", point.padding=.5, xlim=c(NULL, 0.8), ylim=c(0, 0.2)) 
+
+nwrK = ggplot(nwr, aes(R1, KING)) + geom_point (alpha=.8, color="darkorange", size=2) + theme_bw() + labs(x="R1", y="KING") +
+    geom_text_repel(data=subset(nwr, R1 > 0.6), aes(label=ida), segment.size=.15, size=2, colour="gray20", fontface="bold", point.padding=.5) +
+    geom_text_repel(data=subset(nwr, R1 > 0.6), aes(label=idb), segment.size=.15, size=2, colour="gray20", fontface="bold", point.padding=.5, xlim=c(NULL, 0.8), ylim=c(0.2, 0.3)) 
+
+nwr0
+nwrK
+
+```
+
+
+
+
+#### SWR
+```{r}
+swr0 = ggplot(swr, aes(R1, R0)) + geom_point (alpha=.8, color="royalblue4", size=2) + theme_bw() + labs(x="R1", y="R0") +
+  scale_x_continuous(breaks=seq(0,16,2)) +
+   geom_text_repel(data=subset(swr, R1 > 10), aes(label=ida), segment.size=.15, size=2, colour="gray20", fontface="bold", point.padding=.5, direction="x", xlim=c(8,14), ylim=c(0, 0.5)) +
+  geom_text_repel(data=subset(swr, R1 > 10), aes(label=idb), segment.size=.15, size=2, colour="gray20", fontface="bold", point.padding=.5, direction="y", ylim=c(0.15,0.5))
+
+swrK = ggplot(swr, aes(R1, KING)) + geom_point (alpha=.8, color="royalblue4", size=2) + theme_bw() + labs(x="R1", y="KING") +
+  scale_x_continuous(breaks=seq(0,16,2)) +
+  geom_text_repel(data=subset(swr, R1 > 10), aes(label=ida), segment.size=.15, size=2, colour="gray20", fontface="bold", point.padding=.5, direction="x", xlim=c(7, 13), ylim=c(0.35,0.4)) +
+  geom_text_repel(data=subset(swr, R1 > 10), aes(label=idb), segment.size=.15, size=2, colour="gray20", fontface="bold", point.padding=.5, direction="both", xlim=c(9,14), ylim=c(0.1,0.3))
+
+swr0
+swrK
+```
+
+
+```{r}
+plots = ggarrange(nwr0, nwrK, swr0, swrK, nrow=2, ncol=2, labels=c("A", "B" ,"C", "D"), align="v")
+plots
+```
+
+
+
+```{r}
+pdf("WR_v4_FigS5_Relatedness", useDingbats = F)
+plots
+dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
