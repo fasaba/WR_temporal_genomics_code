@@ -33,7 +33,7 @@ snpeff = read.csv("snpeff_output.csv", h=T, fill=T, stringsAsFactors=T, fileEnco
 
 
 
-## Plot number of homozygous derived sites per individual
+## Plot number of homozygous and heterozygous derived sites per individual
 
 ```{r}
 snpeff$group=factor(snpeff$group,levels=c("SWRpre Namibia","SWRpre South Africa","SWRpost South Africa", "SWRpost captive"))
@@ -55,7 +55,7 @@ ggplot(snpeff, aes(lab_ID, het_derived)) +
 ## Plot the ratio of lof/syn per individual
 
 ```{r}
-homratio = ggplot(snpeff, aes(lab_ID, hom_ratio)) + theme_bw() +
+homratio = ggplot(snpeff, aes(lab_ID, lof_syn_ratio)) + theme_bw() +
   geom_col(aes(group=group, fill=group)) +
   coord_flip() +
   scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +
@@ -76,11 +76,11 @@ snpeff$time_window=factor(snpeff$time_window,levels=c("SWRpre", "SWRpost"))
 
 ```{r}
 # the hom ratio
-homratio1 = ggplot(snpeff, aes(time_window, hom_ratio)) + theme_bw() +
+homratio1 = ggplot(snpeff, aes(time_window, lof_syn_ratio)) + theme_bw() +
   
   # plot distribution and points
   geom_violin(aes(group=time_window, colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
-  geom_point(aes(time_window, hom_ratio, group=time_window, colour=time_window), shape=17, cex=2, alpha=.7) +
+  geom_point(aes(time_window, lof_syn_ratio, group=time_window, colour=time_window), shape=17, cex=2, alpha=.7) +
   
   # add colour scale
   scale_color_manual(values= (c("royalblue4", "steelblue3"))) +
@@ -115,9 +115,9 @@ snpeff$group=factor(snpeff$group,levels=c("SWRpre Namibia","SWRpre South Africa"
 
 ```{r}
 # the hom ratio
-homratio2 = ggplot(snpeff, aes(group, hom_ratio)) + theme_bw() +
+homratio2 = ggplot(snpeff, aes(group, lof_syn_ratio)) + theme_bw() +
   geom_boxplot(aes(group=group, colour=group), fill="gray70", lwd=.5, alpha=.4) +
-  geom_jitter(aes(group, hom_ratio, group=group, colour=group), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
+  geom_jitter(aes(group, lof_syn_ratio, group=group, colour=group), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
   
   scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
   
@@ -142,9 +142,9 @@ snpeff$cluster=factor(snpeff$cluster,levels=c("SWRpre West", "SWRpre East" ,"SWR
 
 ```{r}
 # the hom ratio
-homratio3 = ggplot(snpeff, aes(cluster, hom_ratio)) + theme_bw() +
+homratio3 = ggplot(snpeff, aes(cluster, lof_syn_ratio)) + theme_bw() +
   geom_boxplot(aes(group=cluster, colour=cluster), fill="gray70", lwd=.5, alpha=.4) +
-  geom_jitter(aes(cluster, hom_ratio, group=cluster, colour=cluster), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
+  geom_jitter(aes(cluster, lof_syn_ratio, group=cluster, colour=cluster), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
   
   scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
   
@@ -194,10 +194,6 @@ md = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding
 
 Subset the table to keep only the samples of interest
 ```{r}
-swrpre
-```
-
-```{r}
 swrpre = subset(md, sample_name == "NA1845.1" | sample_name == "NA1857.1" |  sample_name == "ZA-un.1" | sample_name == "NA1856.1" | sample_name == "ZA1869.1")
 ```
 
@@ -218,10 +214,11 @@ swrpre$sample_name = with(swrpre, factor(sample_name, levels=sample_name[order(C
 
 ```{r}
 swrpreH = ggplot(swrpre, aes(sample_name, gw_het_GL2_5x_ErTv, colour=Cluster, fill=Cluster)) + theme_bw() +
-  geom_col(alpha=.9) +
+  geom_col(alpha=.9, width=.5) +
+  theme(axis.text.x=element_text(size=8, angle=20, hjust=1), axis.title.x=element_text(size=9)) +
   labs(x="Sample name", y=expression("Genome-wide heterozygosity")) +
-  scale_fill_manual(values=c("royalblue4", "#4169e1")) +
-  scale_colour_manual(values=c("royalblue4", "#4169e1")) +
+  scale_fill_manual(values=c("#4169e1", "royalblue4")) +
+  scale_colour_manual(values=c("#4169e1", "royalblue4")) +
   coord_flip()
 
 swrpreH
@@ -232,10 +229,11 @@ swrpreH
 
 ```{r}
 swrpreF = ggplot(swrpre, aes(sample_name, Froh, fill=Cluster, colour=Cluster)) + theme_bw() +
-  geom_col(alpha=.9) +
+  geom_col(alpha=.9, width=.5) +
+  theme(axis.text.x=element_text(size=8, angle=20, hjust=1), axis.title.x=element_text(size=9)) +
   labs(x="Sample name", y=expression("F"["RoH"])) +
-  scale_fill_manual(values=c("royalblue4", "#4169e1")) +
-  scale_colour_manual(values=c("royalblue4", "#4169e1")) +
+  scale_fill_manual(values=c("#4169e1", "royalblue4")) +
+  scale_colour_manual(values=c("#4169e1", "royalblue4")) +
   coord_flip() 
 
 swrpreF
@@ -248,16 +246,29 @@ swrpreF
 
 Plot the genetic load in the SWRpre of interest
 
-FINISH
+```{r}
+snpeffSWRpre = subset(snpeff, sample == "NA1845.1" | sample == "NA1857.1" |  sample == "ZA-un.1" | sample == "NA1856.1" | sample == "ZA1869.1")
+```
+
+First set the order of the time windows as they should appear on the plot
+```{r}
+snpeffSWRpre$cluster=factor(snpeffSWRpre$cluster,levels=c("SWRpre East","SWRpre West"))
+```
+
+Order the levels of the Cluster variable for plotting
+```{r}
+snpeffSWRpre$sample = with(snpeffSWRpre, factor(sample, levels=sample[order(cluster)]))
+```
 
 
 ```{r}
-swrpreG = ggplot(data=subset(snpeff, sample == "NA1845.1" | sample == "NA1857.1" |  sample == "ZA-un.1" | sample == "NA1856.1" | sample == "ZA1869.1"), 
-                 aes(sample, hom_ratio), fill=cluster, colour=cluster, group=cluster) + theme_bw() +
-  geom_col(alpha=.9) +
-  labs(x="Sample name", y="LoF/synonymous ratio at homozygous derived sites") +
-  scale_fill_manual(values=c("royalblue4", "#4169e1")) +
-  scale_colour_manual(values=c("royalblue4", "#4169e1")) +
+swrpreG = ggplot(snpeffSWRpre, aes(sample, lof_syn_ratio, fill=cluster, colour=cluster, group=cluster)) + theme_bw() +
+  geom_col(alpha=.9, width=.5) +
+  theme(axis.text.x=element_text(size=8, angle=20, hjust=1), axis.title.x=element_text(size=9), 
+        legend.margin=margin(0,0,0,0), legend.box.margin=margin(-1,-1,-1,-1), legend.text=element_text(size=8), legend.key.size=unit(.6, "cm")) +
+  labs(x="Sample name", y="LoF/synonymous ratio") +
+  scale_fill_manual(values=c("#4169e1", "royalblue4")) +
+  scale_colour_manual(values=c("#4169e1", "royalblue4")) +
   coord_flip() 
 
 
@@ -265,52 +276,82 @@ swrpreG
 ```
 
 
-
-
-
+Make the composite figure
 
 ```{r}
-swrpreG = ggplot(snpeff, aes(sample_name, hom_ratio)) + theme_bw() +
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-figS9 = ggarrange(swrpreH + guides(colour=F, fill=F), swrpreF + theme(axis.text.y=element_blank(), axis.title.y=element_blank(), axis.ticks.y=element_blank()), nrow=1, ncol=2, align="h")
+figS9 = ggarrange(swrpreH + guides(colour=F, fill=F), 
+                  swrpreF + theme(axis.text.y=element_blank(), axis.title.y=element_blank(), axis.ticks.y=element_blank()) + guides(colour=F, fill=F),
+                  swrpreG + theme(axis.text.y=element_blank(), axis.title.y=element_blank(), axis.ticks.y=element_blank()),
+                    nrow=1, ncol=3, align="h", widths=c(1.2, 0.8, 1.35))
 figS9
 ```
 
 
 ```{r}
-pdf("WR_v4_FigS9_SWRpre.pdf", height=5, useDingbats = F)
-homratio_fig
+pdf("WR_v4_FigS9_SWRpre.pdf", height=4, useDingbats = F)
+figS9
 dev.off()
 ```
 
 
 
 
+#####################################################################################################
+
+### Extra
+
+### Visualizing other ratios
 
 
+```{r}
+snpeff$cluster=factor(snpeff$cluster,levels=c("SWRpre West", "SWRpre East" ,"SWRpost wild", "SWRpost captive"))
+```
 
 
+The LoF to total number of derived homozygous sites ratio
+```{r}
+
+ggplot(snpeff, aes(cluster, lof_total_ratio)) + theme_bw() +
+  geom_boxplot(aes(group=cluster, colour=cluster), fill="gray70", lwd=.5, alpha=.4) +
+  geom_jitter(aes(cluster, lof_total_ratio, group=cluster, colour=cluster), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
+  
+  scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
+  
+  scale_y_continuous(labels = scales::percent_format(accuracy = 0.001)) +
+  
+  labs(y="LoF/total ratio at homozygous derived sites", x=NULL) +
+  theme(legend.position = "none", axis.text.x=element_text(angle=30, hjust=1, size=12)) +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre West", "SWRpre East")), method.args = list(alternative = "greater")) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpost wild", "SWRpost captive")), method.args = list(alternative = "two.sided")) 
+
+  #geom_text_repel(data=snpeff, aes(label=sample), segment.size=.15, size=2)
 
 
+```
 
+
+The LoF to intergenic number of derived homozygous sites ratio
+```{r}
+
+ggplot(snpeff, aes(cluster, lof_intergenic_ratio)) + theme_bw() +
+  geom_boxplot(aes(group=cluster, colour=cluster), fill="gray70", lwd=.5, alpha=.4) +
+  geom_jitter(aes(cluster, lof_intergenic_ratio, group=cluster, colour=cluster), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
+  
+  scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
+  
+  scale_y_continuous(labels = scales::percent_format(accuracy = 0.001)) +
+  
+  labs(y="LoF/intergenic ratio at homozygous derived sites", x=NULL) +
+  theme(legend.position = "none", axis.text.x=element_text(angle=30, hjust=1, size=12)) +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre West", "SWRpre East")), method.args = list(alternative = "greater")) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpost wild", "SWRpost captive")), method.args = list(alternative = "two.sided")) 
+
+  #geom_text_repel(data=snpeff, aes(label=sample), segment.size=.15, size=2)
+
+
+```
 
 
 

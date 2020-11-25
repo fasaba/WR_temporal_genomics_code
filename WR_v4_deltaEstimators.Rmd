@@ -31,10 +31,12 @@ data = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncodi
 
 ## GW Het
 
+Remove the 4 samples of depth <5x for comparisons of genome-wide het
 ```{r}
 datassHet = subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01')
 ```
 
+Split the filtered data frame into the 4 time windows
 ```{r}
 NWRpreH = datassHet[datassHet$time_window == "NWRpre",]
 NWRpostH = datassHet[datassHet$time_window == "NWRpost",]
@@ -55,7 +57,6 @@ dim(SWRpostH)
 ### Median comparisons for GW Het
 
 #### NWR
-Group comparison
 ```{r}
 wilcox.test(NWRpreH$gw_het_GL2_5x_ErTv, NWRpostH$gw_het_GL2_5x_ErTv, paired=F, alternative = "greater")
 ```
@@ -85,10 +86,13 @@ datassHet %>%
 
 ## RoH length and FRoH
 
+Remove the 6 samples that either: have depth <5x (4 samples) and/or have error rates >1% (4 extra samples) for comparisons of RoH and Froh
 ```{r}
 datassF = subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04')
+dim(datassF)
 ```
 
+Split the filtered data frame into time windows
 ```{r}
 NWRpreF = datassF[datassF$time_window == "NWRpre",]
 NWRpostF = datassF[datassF$time_window == "NWRpost",]
@@ -178,7 +182,7 @@ wilcox.test(SWRpreF$max_RoH_len, SWRpostF$max_RoH_len, paired=F, alternative = "
 
 
 
-### Delta estimators for FRoH
+### Delta estimators for max length of RoH
 Delta estimators
 ```{r}
 datassF$time_window=factor(datassF$time_window, levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
@@ -195,102 +199,182 @@ datassF %>%
 #################################################################################################################################
 
 
-## Toy code for preliminary tests
+## Subsampling NWRpre to rule out the effect of population structure in genomic erosion
 
+### Genome-wide heterozygosity
+```{r}
+datassHetnoDRC = subset(datassHet, country!="DRC")
+dim(datassHetnoDRC)
 
-### Statistical comparison of gw_het median between pre- and post-bottleneck samples for each subspecies
+```
+
+Split the filtered data frame into the 4 time windows
+```{r}
+NWRpreHnoDRC = datassHetnoDRC[datassHetnoDRC$time_window == "NWRpre",]
+NWRpostHnoDRC = datassHetnoDRC[datassHetnoDRC$time_window == "NWRpost",]
+SWRpreHnoDRC = datassHetnoDRC[datassHetnoDRC$time_window == "SWRpre",]
+SWRpostHnoDRC = datassHetnoDRC[datassHetnoDRC$time_window == "SWRpost",]
+
+```
+
 
 ```{r}
-ggplot(data5x, aes(gw_het_GL2_3x_ErTv, group=time_window, fill=time_window)) + geom_histogram(alpha=0.5, binwidth=0.000005, position = "identity") #+ geom_density(alpha=0.2)
+dim(NWRpreHnoDRC)
+dim(NWRpostHnoDRC)
+dim(SWRpreHnoDRC)
+dim(SWRpostHnoDRC)
+
+```
+
+
+#### NWR
+```{r}
+wilcox.test(NWRpreHnoDRC$gw_het_GL2_5x_ErTv, NWRpostHnoDRC$gw_het_GL2_5x_ErTv, paired=F, alternative = "greater")
+```
+
+
+### Delta estimators for GW Het
+Delta estimators
+```{r}
+datassHetnoDRC$time_window=factor(datassHetnoDRC$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+```{r}
+datassHetnoDRC %>%
+  group_by(time_window) %>%
+  #summarize(min=min(gw_het_GL2_5x_ErTv), max=max(gw_het_GL2_5x_ErTv), median=median(gw_het_GL2_5x_ErTv))
+  summarize(median=median(gw_het_GL2_5x_ErTv))
+  
+```
+
+Calculate the delta estimator for subsampled NWR comparison
+```{r}
+# With the values from the table above, do median post-bottleneck value minus median pre-bottleneck value, divided by the median pre-bottleneck value
+(0.000187790-0.000205635)/0.000205635
+
+# the result is the decrease in GW Het between NWRpre and post (excluding DRC)
 ```
 
 
 
-Making a dataframe per group (subspecies and time window)
+#### Froh
 ```{r}
-nwr1_5x = data5x[data5x$time_window == "NWR1",]
-nwr2_5x = data5x[data5x$time_window == "NWR2",]
-swr1_5x = data5x[data5x$time_window == "SWR1",]
-swr2_5x = data5x[data5x$time_window == "SWR2",]
+datassFnoDRC = subset(datassF, country!="DRC")
+dim(datassFnoDRC)
 ```
 
 
-Comparison NWR1-NWR2. Testing whether Het in NWR2 is significantly smaller than that of NWR1
+Split the filtered data frame into time windows
 ```{r}
-# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
-wilcox.test(nwr1_5x$gw_het_GL2_3x_ErTv, nwr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
+NWRpreFnoDRC = datassFnoDRC[datassFnoDRC$time_window == "NWRpre",]
+NWRpostFnoDRC = datassFnoDRC[datassFnoDRC$time_window == "NWRpost",]
+SWRpreFnoDRC = datassFnoDRC[datassFnoDRC$time_window == "SWRpre",]
+SWRpostFnoDRC = datassFnoDRC[datassFnoDRC$time_window == "SWRpost",]
 
-# the left test reports if the distribution of Het of NWR1 is to the left of that of NWR2 (i.e. NWR1 smaller than NWR2)
-wilcox.test(nwr1_5x$gw_het_GL2_3x_ErTv, nwr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) 
+```
 
-# the right test reports is NWR1 is to the right (larger) than NWR2 Het distribution
-wilcox.test(nwr1_5x$gw_het_GL2_3x_ErTv, nwr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
+```{r}
+dim(NWRpreFnoDRC)
+dim(NWRpostFnoDRC)
+dim(SWRpreFnoDRC)
+dim(SWRpostFnoDRC)
+
 ```
 
 
-Comparison SWR1-SWR2
+### Median comparisons for FRoH
+
+#### NWR
+Group comparison
 ```{r}
-# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
-wilcox.test(swr1_5x$gw_het_GL2_3x_ErTv, swr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
-
-# the left test reports if the distribution of Het of SWR1 is to the left of that of SWR2 (i.e. SWR1 smaller than SWR2)
-wilcox.test(swr1_5x$gw_het_GL2_3x_ErTv, swr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less"))
-
-# the right test reports is SWR1 is to the right (larger) than SWR2 Het distribution
-wilcox.test(swr1_5x$gw_het_GL2_3x_ErTv, swr2_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
-#wilcox.test(swr2_5x$gw_het_GL2_3x_ErTv, swr1_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) #equivalent test
+wilcox.test(NWRpreFnoDRC$Froh, NWRpostFnoDRC$Froh, paired=F, alternative = "less")
 ```
 
-##################
-
-#### Statistical tests for the whole sample set (n=52)
-
-Making a dataframe per group (subspecies and time window)
+### Delta estimators for FRoH
+Delta estimators
 ```{r}
-nwr1 = data[data$time_window == "NWR1",]
-nwr2 = data[data$time_window == "NWR2",]
-swr1 = data[data$time_window == "SWR1",]
-swr2 = data[data$time_window == "SWR2",]
+datassFnoDRC$time_window=factor(datassFnoDRC$time_window, levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+```{r}
+datassFnoDRC %>%
+  group_by(time_window) %>%
+  summarize(min=min(Froh), max=max(Froh), median=median(Froh))
 ```
 
 
-Comparison NWR1-NWR2. Testing whether Het in NWR2 is significantly smaller than that of NWR1
+Calculate the delta estimator for subsampled NWR comparison
 ```{r}
-# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
-wilcox.test(nwr1$gw_het_GL2_3x_ErTv, nwr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
+# With the values from the table above, do median post-bottleneck value minus median pre-bottleneck value, divided by the median pre-bottleneck value
+(0.4023980-0.3843370)/0.3843370
 
-# the left test reports if the distribution of Het of NWR1 is to the left of that of NWR2 (i.e. NWR1 smaller than NWR2)
-wilcox.test(nwr1$gw_het_GL2_3x_ErTv, nwr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) 
-
-# the right test reports is NWR1 is to the right (larger) than NWR2 Het distribution
-wilcox.test(nwr1$gw_het_GL2_3x_ErTv, nwr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
-```
-
-
-Comparison SWR1-SWR2
-```{r}
-# the two-sided test reports if there is a significant difference between the distributions, on both sides of the distribution
-wilcox.test(swr1$gw_het_GL2_3x_ErTv, swr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("two.sided"))
-
-# the left test reports if the distribution of Het of SWR1 is to the left of that of SWR2 (i.e. SWR1 smaller than SWR2)
-wilcox.test(swr1$gw_het_GL2_3x_ErTv, swr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less"))
-
-# the right test reports is SWR1 is to the right (larger) than SWR2 Het distribution
-wilcox.test(swr1$gw_het_GL2_3x_ErTv, swr2$gw_het_GL2_3x_ErTv, paired = F, alternative=c("greater"))
-#wilcox.test(swr2_5x$gw_het_GL2_3x_ErTv, swr1_5x$gw_het_GL2_3x_ErTv, paired = F, alternative=c("less")) #equivalent test
+# the result is the increase in Froh between NWRpre and post (excluding DRC)
 ```
 
 
 
+### Median comparisons for AVERAGE RoH length in subsampled NWR comparisons
+
+
+#### Group comparison
+```{r}
+wilcox.test(NWRpreFnoDRC$ave_RoH_len, NWRpostFnoDRC$ave_RoH_len, paired=F, alternative = "less")
+```
+
+#### Delta estimators
+
+```{r}
+datassFnoDRC$time_window=factor(datassFnoDRC$time_window, levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+```{r}
+datassFnoDRC %>%
+  group_by(time_window) %>%
+  summarize(min=min(ave_RoH_len), max=max(ave_RoH_len), median=median(ave_RoH_len))
+```
+
+Calculate the delta estimator for subsampled NWR comparison
+```{r}
+# With the values from the table above, do median post-bottleneck value minus median pre-bottleneck value, divided by the median pre-bottleneck value
+(291588.0-217302.0)/217302.0
+
+# the result is the increase in average RoH length between NWRpre and post (excluding DRC)
+```
 
 
 
 
 
 
+### Median comparisons for MAXIMUM RoH length in subsampled NWR comparisons
+
+
+#### Group comparison
+```{r}
+wilcox.test(NWRpreFnoDRC$max_RoH_len, NWRpostFnoDRC$max_RoH_len, paired=F, alternative = "less")
+```
+
+#### Delta estimators
+
+```{r}
+datassFnoDRC$time_window=factor(datassFnoDRC$time_window, levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+```{r}
+datassFnoDRC %>%
+  group_by(time_window) %>%
+  summarize(min=min(max_RoH_len), max=max(max_RoH_len), median=median(max_RoH_len))
+```
 
 
 
+Calculate the delta estimator for subsampled NWR comparison
+```{r}
+# With the values from the table above, do median post-bottleneck value minus median pre-bottleneck value, divided by the median pre-bottleneck value
+(5808820-4330095)/4330095
+
+# the result is the increase in maximum RoH length between NWRpre and post (excluding DRC)
+```
 
 
 

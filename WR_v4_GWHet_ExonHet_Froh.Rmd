@@ -51,7 +51,7 @@ gw_het = gw_het +
   geom_violin(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.6) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -105,7 +105,7 @@ fRoh = fRoh +
   geom_violin(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.6) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -143,7 +143,7 @@ aveRoh = aveRoh +
   geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=1.5, alpha=.5) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -182,7 +182,7 @@ maxRoh = maxRoh +
   geom_boxplot(aes(colour=time_window), fill="gray60", lwd=.5, alpha=.3) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=1.5, alpha=.5) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -203,8 +203,8 @@ maxRoh
 ### Make composite figure for genomic erosion stats
 
 ```{r}
-erosion = ggarrange(gw_het + theme(axis.text.x=element_blank()), 
-                    fRoh + theme(axis.text.x=element_blank()), 
+erosion = ggarrange(gw_het + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()), 
+                    fRoh + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()), 
                     aveRoh + theme(axis.text.x=element_text(size=10)), 
                     maxRoh + theme(axis.text.x=element_text(size=10)), 
                     nrow=2, ncol=2, align="v", labels=c( "A", "B" , "C", "D"))
@@ -214,23 +214,10 @@ erosion
 
 
 ```{r}
-pdf("WR_v4_GenomicErosionFig.pdf", useDingbats = F)
+pdf("WR_v4_Fig4.GenomicErosion.pdf", useDingbats = F)
 erosion
 dev.off()
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -275,23 +262,30 @@ geom_violin(aes(colour=time_window, fill=time_window), lwd=.3, alpha=.4) +
 
 ### Subsampling in NWR
 
+Visualize differences between groups after removing samples from DRC in NWRpre, to rule out that population structure might be inflating genomic erosion patterns.
+
+First set the order of the time windows as they should appear on the plot
+```{r}
+data$time_window=factor(data$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+
+#### Genome-wide heterozygosity
 ```{r}
 # plot het values per time window
 gw_het_ss = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & country!="DRC"),
-       aes(time_window, gw_het_GL2_5x_ErTv)) +
+       aes(time_window, gw_het_GL2_5x_ErTv)) + theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Genome-wide heterozygosity") +
   
   # format scale in y axis
-  #scale_y_continuous(limits=c(0, 0.55), breaks=seq(0, 0.55, 0.1), labels=scales::number_format(accuracy = 0.01)) +
+   scale_y_continuous(labels = function(x) format(x, scientific = F), limits=c(0.00008, 0.00026))
 
-# set up the panel
-theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="GW Het subsampled")
 
   # plot violin per group
 gw_het_ss = gw_het_ss +  
   geom_violin(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.6) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -301,7 +295,7 @@ gw_het_ss = gw_het_ss +
   stat_summary(fun=median, geom="crossbar", colour='gray30', width=.2, lwd=.4)
   
   gw_het_ss = gw_het_ss + 
-    stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), size=3, colour="gray20") #+
+    stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), size=3, colour="gray20", label.y=c(0.00024, 0.000225)) #+
   
   #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' & country!="DRC"), aes(label=sample_name), segment.size=.15, size=2)
   
@@ -309,8 +303,9 @@ gw_het_ss
 ```
 
 
+#### Froh
 ```{r}
-# plot het values per time window
+# plot Froh values per time window
 fRohss = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' 
                             & country!="DRC"),
        aes(time_window, Froh)) +
@@ -326,7 +321,7 @@ fRohss = fRohss +
   geom_violin(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.6) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -344,11 +339,110 @@ fRohss
 ```
 
 
+#### Plot average RoH length per individual in the 10 largest scaffolds
+
+
+Visualize average RoH length in the 10 largest scaffolds
 ```{r}
-pdf("WR_v4_FigSX_GenomicErosionSS.pdf",height=5,  useDingbats = F)
-ggarrange(gw_het_ss, fRohss, nrow=1, ncol=2, labels=c("A", "B"))
+aveRohss = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' & country!="DRC"),
+       aes(time_window, ave_RoH_len)) +
+  
+  scale_y_continuous(limits=c(50000, 840000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(100000, 800000, 100000)) +
+
+# set up the panel
+theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Average RoH length (Mbp)")
+
+# plot violin per group
+aveRohss = aveRohss +  
+  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
+  
+  # add scatter points per group
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=1.5, alpha=.5) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) 
+  
+# perform wilcox tests to compare groups
+aveRohss = aveRohss + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(600000, 800000), size=3, colour="gray20") #+
+  
+  #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
+
+aveRohss
+  
+
+```
+
+
+
+#### Visualize maximum RoH length in the 10 largest scaffolds
+
+Use the function written before to customize the y axis here too
+
+```{r}
+maxRohss = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' & country!="DRC"),
+       aes(time_window, max_RoH_len)) +
+  
+  # customize the y axis scale
+  scale_y_continuous(limits=c(100000, 16000000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(1000000, 16000000, 2000000)) +
+
+# set up the panel
+theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Maximum RoH length (Mbp)")
+
+
+maxRohss = maxRohss +  
+  # create boxplots
+  geom_boxplot(aes(colour=time_window), fill="gray60", lwd=.5, alpha=.3) +
+  
+  # add scatter points per group
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=1.5, alpha=.5) + 
+  
+  # add colours and filling colours
+  scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  # run the wilcox tests to compare groups
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(14000000, 15000000), size=3, colour="gray20") #+
+  
+  #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
+  
+maxRohss
+
+```
+
+
+Make composite figure for supplementary material
+
+```{r}
+erosionss = ggarrange(gw_het_ss + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()), 
+                    fRohss + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()), 
+                    aveRohss + theme(axis.text.x=element_text(size=10)), 
+                    maxRohss + theme(axis.text.x=element_text(size=10)), 
+                    nrow=2, ncol=2, align="v", labels=c( "A", "B" , "C", "D"))
+
+erosionss
+```
+
+
+```{r}
+pdf("WR_v4_FigS8_GenomicErosionSS.pdf",  useDingbats = F)
+erosionss
 dev.off()
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
