@@ -66,7 +66,7 @@ Y
 Read in files
 ```{r}
 # retrieve files
-Depthfiles66 <- read.table('WR_56I_13Mb.Depth', header=F)
+Depthfiles66 <- read.table('WR_56I_DepthScafNew.txt', header=F)
 ```
 
 ```{r}
@@ -114,9 +114,9 @@ colnames(scfIndex) = c("scfIndex")
 
 Visualize the normalized depths across scaffolds and per sample
 ```{r}
-Z = ggplot(B[B$Sample != 'mwr_TG0457' & B$Sample != 'mwr_TG0459' & B$Sample != 'mwr_TG0464' & B$Sample != 'mwr_TGF08', ], aes(Scaffold, NormScaffoldDepth, colour=Sample)) +  geom_point(size=1, alpha=.6) + theme_bw() + guides(colour=F) + theme_bw()
-  
-#Z = Z + theme(axis.text.x=element_text(angle=60, hjust=1))
+Z = ggplot(B[B$Sample != 'mwr_TG0457' & B$Sample != 'mwr_TG0459' & B$Sample != 'mwr_TG0464' & B$Sample != 'mwr_TGF08', ], aes(Scaffold, NormScaffoldDepth, colour=Sample)) +  geom_point(size=1, alpha=.6) +
+  theme_bw() + guides(colour=F) 
+
 Z = Z + scale_y_continuous(limits=c(0,2)) + scale_x_discrete(labels=scfIndex$scfIndex, guide = guide_axis(n.dodge = 2))
 Z = Z + ylab("Normalised depth of coverage")
 
@@ -128,7 +128,7 @@ Z
 ### Save scaffold-related plots as a supplementary figure
 
 ```{r}
-pdf('WR_v4_FigS1.pdf', useDingbats = F)
+pdf('WR_v5_FigS1.pdf', useDingbats = F)
  plot_grid(Y, Z, nrow=2, ncol=1, labels=c('A', 'B'), label_size = 10, align="v")
 dev.off()
 ```
@@ -151,7 +151,7 @@ It's mwr_TG0463 (SD1905.3)
 Read in files
 ```{r}
 # retrieve files
-Depthfiles <- read.table('WR_56I_63scfs_13Mb.Depth', header=F)
+Depthfiles <- read.table('WR_56I_DepthScafNew_63scfs.txt', header=F)
 ```
 
 ```{r}
@@ -186,18 +186,6 @@ for (i in levels(Depthfiles$V5)) {
 
 head(A)
 
-```
-
-
-Plot the depth per scaffold per sample
-```{r}
-DS = ggplot(A, aes(Sample, AveScaffoldDepth, colour=Sample)) +  geom_violin(alpha=.6) + theme_bw() + guides(colour=F)
-  
-DS = DS + theme(axis.text.x=element_text(angle=90, size=3), axis.text.y=element_text(size=8), axis.title=element_text(size=8))
-#DS = DS + scale_y_continuous(limits=c(0,2))
-DS = DS + ylab("Depth of coverage")
-
-DS
 ```
 
 
@@ -306,6 +294,142 @@ figS2
 dev.off()
 
 ```
+
+
+
+
+
+##############################################################################################
+
+#### Plot per group
+
+Subset the dataframe of depths into the two subspecies
+```{r}
+NWR_names = c("mwr_TG0450", "mwr_TG0451", "mwr_TG0452", "mwr_TG0453", "mwr_TG0454", "mwr_TG0455", "mwr_TG0456", "mwr_TG0458", "mwr_TG0460", "mwr_TG0461", "mwr_TG0462", "mwr_TG0463", "mwr_TG0465", "mwr_TGF14", "mwr_TGF15", "mwr_TGF16", "wr_SRR5852741", "wr_SRR5852742", "wr_SRR5852743", "wr_SRR5852744", "wr_SRR5852745", "wr_SRR5852746", "wr_SRR5852747", "wr_SRR5852748", "wr_SRR5852749")
+
+NWR = A[A$Sample %in% NWR_names,]
+
+SWR_names = c("mwr_TG0449", "mwr_TGF01", "mwr_TGF02", "mwr_TGF03", "mwr_TGF04", "mwr_TGF05", "mwr_TGF06", "mwr_TGF07", "mwr_TGF09", "mwr_TGF10", "mwr_TGF11", "mwr_TGF12", "mwr_TGF13", "mwr_TGF17", "wr_P9109_102", "wr_P9109_103", "wr_P9109_104", "wr_P9109_105", "wr_P9109_106", "wr_P9109_107", "wr_P9109_108", "wr_P9109_109", "wr_P9109_110", "wr_SRR5852738", "wr_SRR5852739", "wr_SRR5852740", "wr_SRR5852750")
+
+SWR = A[A$Sample %in% SWR_names,]
+
+```
+
+
+Set the new labels
+```{r}
+NWR_newID = c('CD-un.1','CD1912.1','CD1912.2','CD1911.1','CD1913.1','CD1912.3','CD1911.2','CD-un.2','SD1905.1','SD1905.2','UG1905.1','SD1905.3','SD1905.4','SD1914.1','UG1905.2','SD1905.5', 'SD1972.1','SD1973.1','SS1954.1','SD1972.2','SD1974.1','SD1972.3','SD1963.1','UG1965.1','SD1972.4')
+
+SWR_newID = c('ZA1869.1','ZA1845.1','un1856.1','ZA-un.1','ZA1845.2','NA1856.1','NA1845.1','NA1857.1','ZA1842.1','ZA1995.1','ZA2009.1','ZA2010.1','un2004.1','ZA1976.1','cap2009.1','cap2010.1','cap2008.1','cap2011.1','cap2011.2','cap2011.3','ZA2012.1','ZA1968.1','ZA1969.1','ZA1958.1','ZA1963.1','ZA1963.2','ZA1961.1')
+  
+```
+
+
+Add a column for time window to make a colour legend when plotting
+```{r}
+NWR$time_window <- "window"
+
+NWR[NWR$Sample %in% c("mwr_TG0450", "mwr_TG0451", "mwr_TG0452", "mwr_TG0453", "mwr_TG0454", "mwr_TG0455", "mwr_TG0456", "mwr_TG0458", "mwr_TG0460", "mwr_TG0461", "mwr_TG0462", "mwr_TG0463", "mwr_TG0465", "mwr_TGF14", "mwr_TGF15", "mwr_TGF16"), ]$time_window <- "NWRpre"
+
+NWR[NWR$Sample %in% c("wr_SRR5852741", "wr_SRR5852742", "wr_SRR5852743", "wr_SRR5852744", "wr_SRR5852745", "wr_SRR5852746", "wr_SRR5852747", "wr_SRR5852748", "wr_SRR5852749") , ]$time_window <- "NWRpost"
+
+```
+
+
+```{r}
+SWR$time_window <- "window"
+
+SWR[SWR$Sample %in% c("mwr_TG0449", "mwr_TGF01", "mwr_TGF02", "mwr_TGF03", "mwr_TGF04", "mwr_TGF05", "mwr_TGF06", "mwr_TGF07", "mwr_TGF09"), ]$time_window <- "SWRpre"
+
+SWR[SWR$Sample %in% c("mwr_TGF10", "mwr_TGF11", "mwr_TGF12", "mwr_TGF13", "mwr_TGF17", "wr_P9109_102", "wr_P9109_103", "wr_P9109_104", "wr_P9109_105", "wr_P9109_106", "wr_P9109_107", "wr_P9109_108", "wr_P9109_109", "wr_P9109_110", "wr_SRR5852738", "wr_SRR5852739", "wr_SRR5852740", "wr_SRR5852750") , ]$time_window <- "SWRpost"
+
+```
+
+
+
+
+Plot NWR
+```{r}
+NWR$time_window=factor(NWR$time_window, levels=c("NWRpre","NWRpost"))
+```
+
+```{r}
+n = ggplot(NWR, aes(Sample, AveScaffoldDepth)) 
+
+n = n + 
+  theme_bw() + theme(legend.position="none", axis.text.x=element_text(angle=40, hjust=1, size=8)) +
+  geom_violin(aes(Sample, AveScaffoldDepth, colour=time_window), fill="gray60", alpha=.4, lwd=.5, adjust=5) +
+  scale_colour_manual(values=c("gold3", "darkorange")) +
+  scale_x_discrete(labels=as.character(NWR_newID)) +
+  scale_y_continuous(limits=c(0, 25)) +
+  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="gray20") +
+  labs(x="Sample name", y="Depth of coverage")
+
+n
+```
+
+
+
+
+Plot SWR1
+```{r}
+SWR$time_window=factor(SWR$time_window, levels=c("SWRpre","SWRpost"))
+```
+
+```{r}
+s = ggplot(SWR, aes(Sample, AveScaffoldDepth)) 
+
+s = s + 
+  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=8)) +
+  geom_violin(aes(Sample, AveScaffoldDepth, colour=time_window), fill="gray60", alpha=.5, lwd=.4, adjust=5) +
+  scale_colour_manual(values=c("royalblue4", "steelblue3")) +
+  scale_x_discrete(labels=as.character(SWR_newID)) +
+  scale_y_continuous(limits=c(0, 25)) +
+  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="gray20") +
+  labs(x="Sample name", y="Depth of coverage")
+
+s
+```
+
+
+
+```{r}
+figS2v5 = ggarrange(n + theme(axis.title.x=element_blank()) , s , nrow=2, align="v", labels=c("A", "B"), font.label=list(size=10))
+figS2v5
+```
+
+
+
+```{r}
+pdf('WR_v5_FigS2_v1.pdf', useDingbats = F)
+figS2v5
+dev.off()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
