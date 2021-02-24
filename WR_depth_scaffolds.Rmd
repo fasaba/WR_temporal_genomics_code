@@ -134,14 +134,6 @@ dev.off()
 ```
 
 
-#### Who is the weirdo that shows a depth of coverage of 0 in 19/63 scaffolds? 
-```{r}
-ggplot(B[B$Sample == 'mwr_TG0463', ], aes(Scaffold, NormScaffoldDepth, colour=Sample)) +  geom_point(size=1, alpha=.6) + theme_bw()
-```
-
-
-It's mwr_TG0463 (SD1905.3)
-
 
 ##############################################################################
 
@@ -189,119 +181,9 @@ head(A)
 ```
 
 
-
-#### Plot per group
-
-Subset the dataframe of depths into the 4 groups
-```{r}
-NWR1_names = c("mwr_TG0450", "mwr_TG0451", "mwr_TG0452", "mwr_TG0453", "mwr_TG0454", "mwr_TG0455", "mwr_TG0456", "mwr_TG0458", "mwr_TG0460", "mwr_TG0461", "mwr_TG0462", "mwr_TG0463", "mwr_TG0465", "mwr_TGF14", "mwr_TGF15", "mwr_TGF16")
-NWR1 = A[A$Sample %in% NWR1_names,]
-
-NWR2_names = c("wr_SRR5852741", "wr_SRR5852742", "wr_SRR5852743", "wr_SRR5852744", "wr_SRR5852745", "wr_SRR5852746", "wr_SRR5852747", "wr_SRR5852748", "wr_SRR5852749")
-NWR2 = A[A$Sample %in% NWR2_names,]
-
-SWR1_names = c("mwr_TG0449", "mwr_TGF01", "mwr_TGF02", "mwr_TGF03", "mwr_TGF04", "mwr_TGF05", "mwr_TGF06", "mwr_TGF07", "mwr_TGF09")
-SWR1 = A[A$Sample %in% SWR1_names,]
-
-SWR2_names = c("mwr_TGF10", "mwr_TGF11", "mwr_TGF12", "mwr_TGF13", "mwr_TGF17", "wr_P9109_102", "wr_P9109_103", "wr_P9109_104", "wr_P9109_105", "wr_P9109_106", "wr_P9109_107", "wr_P9109_108", "wr_P9109_109", "wr_P9109_110", "wr_SRR5852738", "wr_SRR5852739", "wr_SRR5852740", "wr_SRR5852750")
-SWR2 = A[A$Sample %in% SWR2_names,]
-```
-
-
-Set the new labels
-```{r}
-NWR1_newID = c('CD-un.1','CD1912.1','CD1912.2','CD1911.1','CD1913.1','CD1912.3','CD1911.2','CD-un.2','SD1905.1','SD1905.2','UG1905.1','SD1905.3','SD1905.4','SD1914.1','UG1905.2','SD1905.5')
-
-NWR2_newID = c('SD1972.1','SD1973.1','SS1954.1','SD1972.2','SD1974.1','SD1972.3','SD1963.1','UG1965.1','SD1972.4')
-  
-SWR1_newID = c('ZA1869.1','ZA1845.1','un1856.1','ZA-un.1','ZA1845.2','NA1856.1','NA1845.1','NA1857.1','ZA1842.1')
-  
-SWR2_newID = c('ZA1995.1','ZA2009.1','ZA2010.1','un2004.1','ZA1976.1','cap2009.1','cap2010.1','cap2008.1','cap2011.1','cap2011.2','cap2011.3','ZA2012.1','ZA1968.1','ZA1969.1','ZA1958.1','ZA1963.1','ZA1963.2','ZA1961.1')
-```
-
-
-
-Plot NWR1
-```{r}
-f = ggplot(NWR1, aes(Sample, AveScaffoldDepth)) 
-
-f = f + 
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=8)) +
-  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray40", colour="gold3", alpha=.4, lwd=.3) +
-  scale_x_discrete(labels=as.character(NWR1_newID)) +
-  scale_y_continuous(limits=c(0, 25)) +
-  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="gray20") +
-  labs(x="Sample name", y="Depth of coverage")
-
-f
-```
-
-
-Plot NWR2
-```{r}
-g = ggplot(NWR2, aes(Sample, AveScaffoldDepth)) 
-
-g = g + 
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=8)) +
-  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray40", colour="darkorange", alpha=.4, lwd=.3) +
-  scale_x_discrete(labels=as.character(NWR2_newID)) +
-  scale_y_continuous(limits=c(0, 25)) +
-  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="gray20") +
-  labs(x="Sample name", y="Depth of coverage")
-
-g
-```
-
-Plot SWR1
-```{r}
-h = ggplot(SWR1, aes(Sample, AveScaffoldDepth)) 
-
-h = h + 
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=8)) +
-  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray40", colour="royalblue4", alpha=.4, lwd=.3) +
-  scale_x_discrete(labels=as.character(SWR1_newID)) +
-  scale_y_continuous(limits=c(0, 25)) +
-  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="gray20") +
-  labs(x="Sample name", y="Depth of coverage")
-
-h
-```
-
-Plot SWR2
-```{r}
-i = ggplot(SWR2, aes(Sample, AveScaffoldDepth)) 
-
-i = i + 
-  theme_bw() + theme(legend.position = "none", axis.text.x=element_text(angle=40, hjust=1, size=8)) +
-  geom_violin(aes(Sample, AveScaffoldDepth), fill="gray40", colour="steelblue3", alpha=.4, lwd=.3) +
-  scale_x_discrete(labels=as.character(SWR2_newID)) +
-  scale_y_continuous(limits=c(0, 25)) +
-  stat_summary(fun="median", geom="crossbar", width=.09, lwd=.2, colour="gray20") +
-  labs(x="Sample name", y="Depth of coverage")
-
-i
-
-```
-
-```{r}
-figS2 = ggarrange(f + theme(axis.title.x=element_blank()) , g + theme(axis.text.y=element_blank(), axis.title=element_blank()), h, i + theme(axis.text.y=element_blank(), axis.title.y=element_blank()), align="v", labels=c("A", "B", "C", "D"), font.label=list(size=10))
-figS2
-```
-
-```{r}
-pdf('WR_v4_FigS2_v1.pdf', useDingbats = F)
-figS2
-dev.off()
-
-```
-
-
-
-
-
 ##############################################################################################
 
-#### Plot per group
+#### Plot per subspecies
 
 Subset the dataframe of depths into the two subspecies
 ```{r}
@@ -320,7 +202,7 @@ Set the new labels
 ```{r}
 NWR_newID = c('CD-un.1','CD1912.1','CD1912.2','CD1911.1','CD1913.1','CD1912.3','CD1911.2','CD-un.2','SD1905.1','SD1905.2','UG1905.1','SD1905.3','SD1905.4','SD1914.1','UG1905.2','SD1905.5', 'SD1972.1','SD1973.1','SS1954.1','SD1972.2','SD1974.1','SD1972.3','SD1963.1','UG1965.1','SD1972.4')
 
-SWR_newID = c('ZA1869.1','ZA1845.1','un1856.1','ZA-un.1','ZA1845.2','NA1856.1','NA1845.1','NA1857.1','ZA1842.1','ZA1995.1','ZA2009.1','ZA2010.1','un2004.1','ZA1976.1','cap2009.1','cap2010.1','cap2008.1','cap2011.1','cap2011.2','cap2011.3','ZA2012.1','ZA1968.1','ZA1969.1','ZA1958.1','ZA1963.1','ZA1963.2','ZA1961.1')
+SWR_newID = c('ZA1869.1','ZA1845.1','un1856.1','ZA-un.1','ZA1845.2','NA1856.1','NA1845.1','NA1857.1','ZA1842.1','ZA1960.1','ZA1965.1','ZA1970.1','un1968.1','ZA1976.1','cap2009.1','cap2010.1','cap2008.1','cap2011.1','cap2011.2','cap2011.3','ZA2012.1','ZA1968.1','ZA1969.1','ZA1958.1','ZA1963.1','ZA1963.2','ZA1961.1')
   
 ```
 
@@ -401,7 +283,7 @@ figS2v5
 
 
 ```{r}
-pdf('WR_v5_FigS2_v1.pdf', useDingbats = F)
+pdf('WR_v5_FigS2_v2.pdf', useDingbats = F)
 figS2v5
 dev.off()
 
