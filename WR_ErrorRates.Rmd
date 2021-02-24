@@ -30,7 +30,7 @@ data = read.table("WR_ErrorRates_P9109_110best_BRout.Est.txt", header=T, fill=T,
 
 Reading in file containing metadata and genomic diversity metrics 
 ```{r}
-metadata = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+metadata = read.csv("WR_TableS1_v6.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 ```
 
 
@@ -75,7 +75,7 @@ E
 
 Save the plot
 ```{r eval=FALSE, include=FALSE}
-pdf("WR_v4_FigS3_ErrorRates.pdf", useDingbats = F)
+pdf("WR_v5_FigS3_ErrorRates.pdf", height=5, useDingbats = F)
 E
 dev.off()
 ```
