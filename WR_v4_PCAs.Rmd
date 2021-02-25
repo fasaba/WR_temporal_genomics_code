@@ -303,7 +303,7 @@ swr = ggplot(evecSWR, aes(x=PC1, y=PC2)) +
         legend.title=element_text(size=0), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=7), legend.key.size=unit(.4, "cm"), 
         legend.box.margin=margin(-10,-10,-10,-10), plot.margin=margin(0,2,0,0)) +
   
-  geom_text_repel(data=subset(evecSWR, time_window=="SWRpre"), aes(label=sample_name), segment.size=.2, segment.alpha=.1, size=2.4, force=20, box.padding=0.5, colour="gray20")
+  geom_text_repel(data=subset(evecSWR, time_window=="SWRpre"), aes(label=sample_name), segment.size=.3, segment.alpha=.8, size=2.4, force=20, box.padding=0.5, colour="gray20")
    
 
 swr
