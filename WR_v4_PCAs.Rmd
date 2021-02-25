@@ -83,12 +83,12 @@ A = ggplot(evec, aes(x=PC1, y=PC2)) +
   geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
   
   # plot data points (2 legend alternatives)
-  geom_point(aes(colour = window_country, shape = window_country), alpha=.7, size=4) + 
+  geom_point(aes(colour = window_country, shape = window_country), alpha=.8, size=4) + 
   
   # assign colors and shapes
   scale_colour_manual(values=c("gold3", "gold3", "gold3", "darkorange", "darkorange", "darkorange", "royalblue4", "royalblue4", "steelblue3", "steelblue3" , "steelblue3" )) +
-  scale_shape_manual(values=c(15, 17, 4, 7, 17, 4, 16, 12, 13, 16, 8)) +
-  #scale_shape_manual(values=c(7, 1, 10, 17, 18, 15, 9, 8)) +
+  #scale_shape_manual(values=c(15, 17, 4, 7, 17, 4, 16, 12, 13, 16, 8)) +
+  scale_shape_manual(values=c(15, 17, 8, 15, 17, 8, 16, 17, 17, 16, 8)) +
   
   # labels, titles, background, etc.
   xlab(paste0("PC1 (", round(eval[1]*100, 2), "%)"))+
@@ -120,7 +120,7 @@ B = ggplot(evec, aes(x=PC2, y=PC3)) +
   geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
   
   # plot data points (2 legend alternatives)
-  geom_point(aes(colour = time_window, shape = time_window), alpha=.7, size=4) + 
+  geom_point(aes(colour = time_window, shape = time_window), alpha=.8, size=4) + 
   
   # assign colors and shapes
   scale_colour_manual(values=c("gold3", "darkorange", "royalblue4", "steelblue3")) +
@@ -206,11 +206,11 @@ nwr = ggplot(evecNWR, aes(x=PC1, y=PC2)) +
   geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
   
   # plot data points (2 legend alternatives)
-  geom_point(aes(colour = window_country, shape = window_country), alpha=.7, size=3) + 
+  geom_point(aes(colour = window_country, shape = window_country), alpha=.8, size=3) + 
   
   # assign colors and shapes
   scale_colour_manual(values=c("gold3", "gold3", "gold3", "darkorange", "darkorange", "darkorange")) +
-  scale_shape_manual(values=c(15, 17, 4, 7, 17, 4)) +
+  scale_shape_manual(values=c(15, 17, 8, 15, 17, 8)) +
   
   
   # labels, titles, background, etc.
@@ -288,11 +288,11 @@ swr = ggplot(evecSWR, aes(x=PC1, y=PC2)) +
   geom_hline(yintercept=0, colour="gray", linetype = "longdash")+
   
   # plot data points (2 legend alternatives)
-  geom_point(aes(colour = window_country, shape = window_country), alpha=.7, size=3) + 
+  geom_point(aes(colour = window_country, shape = window_country), alpha=.8, size=3) + 
   
   # assign colors and shapes
   scale_colour_manual(values=c("royalblue4", "royalblue4", "steelblue3", "steelblue3", "steelblue3")) +
-  scale_shape_manual(values=c(16, 12, 13, 16, 8)) +
+  scale_shape_manual(values=c(16, 17, 17, 16, 8)) +
   
   # labels, titles, background, etc.
   xlab(paste0("PC1 (", round(evalSWR[1]*100, 2), "%)"))+
@@ -346,7 +346,7 @@ fig
 
 
 ```{r}
-pdf('WR_v4_PCAs.pdf', height=6, width=8, useDingbats = F)
+pdf('WR_v5_Fig2_PCAs.pdf', height=6, width=8, useDingbats = F)
 fig
 dev.off()
 ```
