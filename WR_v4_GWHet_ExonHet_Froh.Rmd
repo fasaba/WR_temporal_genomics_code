@@ -31,7 +31,6 @@ data = read.csv("WR_TableS1_v6.csv", h=T, fill=T, stringsAsFactors=T, fileEncodi
 ```
 
 
-
 ### GW Het with GL2 <5x filtered sites estimate excluding the 4 samples of average depth of coverage <5x
 
 First set the order of the time windows as they should appear on the plot
@@ -92,7 +91,7 @@ data$time_window=factor(data$time_window,levels=c("NWRpre","NWRpost","SWRpre", "
 ```{r}
 # plot het values per time window
 fRoh = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
-       aes(time_window, Froh63_min10kb)) +
+       aes(time_window, Froh63_min10kb_Tv)) +
   
   # format scale in y axis
   scale_y_continuous(limits=c(0, 0.55), breaks=seq(0, 0.55, 0.1), labels=scales::number_format(accuracy = 0.01)) +
@@ -131,7 +130,7 @@ fRoh
 Visualize average RoH length in the 10 largest scaffolds
 ```{r}
 aveRoh = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
-       aes(time_window, ave_RoH_len)) +
+       aes(time_window, ave_roh_len)) +
   
   scale_y_continuous(limits=c(50000, 840000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(100000, 800000, 100000)) +
 
@@ -411,15 +410,53 @@ dev.off()
 
 
 
+Comparison of RoH analyses: with 10 scaffolds, 63 scaffolds and only Tv
+
+```{r}
+data$time_window=factor(data$time_window,levels=c("NWRpre", "NWRpost", "SWRpre", "SWRpost"))
+```
+
+```{r}
+ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
+       aes(sample_name)) +
+   facet_wrap(~time_window, scales = "free_x") +
+ 
+  
+  geom_point(aes(sample_name, Froh), colour="black") +
+  geom_point(aes(sample_name, Froh63_min10kb), colour="blue") +
+  geom_point(aes(sample_name, Froh63_min10kb_Tv), colour="green") +
+  
+  theme(axis.text.x=element_text(angle=80, hjust=1, size=8))
+```
 
 
 
+```{r}
+ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
+       aes(sample_name)) +
+   facet_wrap(~time_window, scales = "free_x") +
+ 
+  
+  geom_point(aes(sample_name, ave_RoH_len), colour="black") +
+  geom_point(aes(sample_name, Avg_RoH_len_63min10kb), colour="blue") +
+  geom_point(aes(sample_name, Avg_RoH_len_63min10kb_Tv), colour="green") +
+  
+  theme(axis.text.x=element_text(angle=80, hjust=1, size=8))
+```
 
 
-
-
-
-
+```{r}
+ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
+       aes(sample_name)) +
+   facet_wrap(~time_window, scales = "free_x") +
+ 
+  
+  geom_point(aes(sample_name, max_RoH_len), colour="black") +
+  geom_point(aes(sample_name, Max_RoH_len_63min10kb), colour="blue") +
+  geom_point(aes(sample_name, Max_RoH_len_63min10kb_Tv), colour="green") +
+  
+  theme(axis.text.x=element_text(angle=80, hjust=1, size=8))
+```
 
 
 
