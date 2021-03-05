@@ -49,8 +49,12 @@ colnames(IDs) = "ID"
 samples = as.data.frame(metadata$sample_name)
 colnames(samples) = "sample_name"
 
+window = as.data.frame(metadata$time_window)
+colnames(window) = "time_window"
+
+
 # bind the error rate subsetted data with the identifier columns
-smalldata = cbind(smalldata, IDs, samples)
+smalldata = cbind(smalldata, IDs, samples, window)
 head(smalldata)
 ```
 
@@ -62,15 +66,26 @@ head(smalldataM)
 ```
 
 
+
+Reorder the entries so that the samples appeared grouped by time window on the plot
+```{r}
+smalldataM$time_window=factor(smalldataM$time_window,levels=c("NWRpre", "NWRpost", "SWRpre", "SWRpost"))
+```
+
+
 Visualizing the error rates (all types) per sample
 
 ```{r}
-E = ggplot(smalldataM, aes(ID, value, fill=variable, colour=variable)) + geom_bar(position = position_dodge(0.6), stat = "identity", width=0.4, size=0.2) + theme_bw() +
+E = ggplot(smalldataM, aes(sample_name, value, fill=variable, colour=variable)) + 
+  geom_bar(position = position_dodge(0.6), stat = "identity", width=0.4, size=0.2) + theme_bw() +
   theme(axis.text.x=element_text(angle=80, hjust=1, size=8), legend.key.size= unit(4, "mm"), legend.title=element_blank()) +
-  ylab("Error rate") + xlab("Sample name") + scale_x_discrete(labels = smalldataM$sample_name)
+  ylab("Error rate") + xlab("Sample name") +
+  facet_wrap(~time_window, scales = "free_x")
 
 E
 ```
+
+
 
 
 Save the plot
