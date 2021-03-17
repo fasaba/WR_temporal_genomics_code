@@ -19,7 +19,7 @@ library(ggrepel)
 
 ```{r}
 # load metadata
-md = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+md = read.csv("WR_TableS1_v6.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 
 # make a subset where related inds (1 from each pair) has been removed
 md_unrel = md[md$sample_name != 'CD-un.1' & md$sample_name != 'un1856.1' & md$sample_name != 'ZA1842.1', ]
@@ -69,7 +69,7 @@ Set the right order of factors for the legend
 
 
 ```{r}
-evec$window_country=factor(evec$window_country,levels=c("NWRpre DRC", "NWRpre Sudan", "NWRpre Uganda", "NWRpost South Sudan", "NWRpost Sudan", "NWRpost Uganda", "SWRpre South Africa", "SWRpre Namibia", "SWRpost unknown", "SWRpost South Africa", "SWRpost captive"))
+evec$window_country=factor(evec$window_country,levels=c("NWRpre DRC", "NWRpre South Sudan", "NWRpre Uganda", "NWRpost Sudan", "NWRpost South Sudan", "NWRpost Uganda", "SWRpre South Africa", "SWRpre Namibia", "SWRpost unknown", "SWRpost South Africa", "SWRpost captive"))
 ```
 
 
@@ -193,7 +193,7 @@ head(evecNWR)
 
 Set the order of the levels in the legend
 ```{r}
-evecNWR$window_country=factor(evecNWR$window_country, levels=c("NWRpre DRC", "NWRpre Sudan", "NWRpre Uganda", "NWRpost South Sudan", "NWRpost Sudan", "NWRpost Uganda"))
+evecNWR$window_country=factor(evecNWR$window_country, levels=c("NWRpre DRC", "NWRpre South Sudan", "NWRpre Uganda", "NWRpost Sudan", "NWRpost South Sudan", "NWRpost Uganda"))
 ```
 
 Visualize PCs with legend per subspecies, time window and country of origin (new column in dataframe)
