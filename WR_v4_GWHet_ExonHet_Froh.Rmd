@@ -31,7 +31,7 @@ data = read.csv("WR_TableS1_v6.csv", h=T, fill=T, stringsAsFactors=T, fileEncodi
 ```
 
 
-### GW Het with GL2 <5x filtered sites estimate excluding the 4 samples of average depth of coverage <5x
+### GW Het with GL2 <5x filtered sites and corrected by error rate at transversions estimates excluding the 4 samples of average depth of coverage <5x
 
 First set the order of the time windows as they should appear on the plot
 ```{r}
@@ -50,7 +50,7 @@ gw_het = gw_het +
   geom_violin(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.6) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=1.5, alpha=.6) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -91,7 +91,7 @@ data$time_window=factor(data$time_window,levels=c("NWRpre","NWRpost","SWRpre", "
 ```{r}
 # plot het values per time window
 fRoh = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
-       aes(time_window, Froh63_min10kb_Tv)) +
+       aes(time_window, Froh63_min10kb)) +
   
   # format scale in y axis
   scale_y_continuous(limits=c(0, 0.55), breaks=seq(0, 0.55, 0.1), labels=scales::number_format(accuracy = 0.01)) +
@@ -104,7 +104,7 @@ fRoh = fRoh +
   geom_violin(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.6) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=1.5, alpha=.6) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -124,15 +124,15 @@ fRoh
 
 
 
-#### Plot average RoH length per individual in the 10 largest scaffolds
+#### Plot average RoH length per individual
 
 
 Visualize average RoH length in the 10 largest scaffolds
 ```{r}
 aveRoh = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
-       aes(time_window, ave_roh_len)) +
+       aes(time_window, Avg_RoH_len_63min10kb)) +
   
-  scale_y_continuous(limits=c(50000, 840000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(100000, 800000, 100000)) +
+  scale_y_continuous(limits=c(50000, 720000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(100000, 800000, 100000)) +
 
 # set up the panel
 theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Average RoH length (Mbp)")
@@ -142,7 +142,7 @@ aveRoh = aveRoh +
   geom_violin(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=1.5, alpha=.5) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=1.5, alpha=.6) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -152,7 +152,7 @@ aveRoh = aveRoh +
   stat_summary(fun=median, geom="crossbar", colour='gray30', width=.2, lwd=.4)
   
 # perform wilcox tests to compare groups
-aveRoh = aveRoh + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(600000, 800000), size=3, colour="gray20") #+
+aveRoh = aveRoh + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(450000, 700000), size=3, colour="gray20") #+
   
   #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
 
@@ -164,13 +164,13 @@ aveRoh
 
 
 
-#### Visualize maximum RoH length in the 10 largest scaffolds
+#### Visualize maximum RoH length
 
 Use the function written before to customize the y axis here too
 
 ```{r}
 maxRoh = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
-       aes(time_window, max_RoH_len)) +
+       aes(time_window, Max_RoH_len_63min10kb)) +
   
   # customize the y axis scale
   scale_y_continuous(limits=c(100000, 16000000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(1000000, 16000000, 2000000)) +
@@ -181,10 +181,10 @@ theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Maximum RoH lengt
 
 maxRoh = maxRoh +  
   # create boxplots
-  geom_violin(aes(colour=time_window), fill="gray60", lwd=.5, alpha=.3) +
+  geom_violin(aes(colour=time_window), fill="gray60", lwd=.5, alpha=.4) +
   
   # add scatter points per group
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=1.5, alpha=.5) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=1.5, alpha=.6) + 
   
   # add colours and filling colours
   scale_fill_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) + 
@@ -276,7 +276,7 @@ gw_het_ss
 # plot Froh values per time window
 fRohss = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' 
                             & country!="DRC"),
-       aes(time_window, Froh)) +
+       aes(time_window, Froh63_min10kb)) +
   
   # format scale in y axis
   scale_y_continuous(limits=c(0, 0.55), breaks=seq(0, 0.55, 0.1), labels=scales::number_format(accuracy = 0.01)) +
@@ -307,15 +307,15 @@ fRohss
 ```
 
 
-#### Plot average RoH length per individual in the 10 largest scaffolds
+#### Plot average RoH length per individual
 
 
 Visualize average RoH length in the 10 largest scaffolds
 ```{r}
 aveRohss = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' & country!="DRC"),
-       aes(time_window, ave_RoH_len)) +
+       aes(time_window, Avg_RoH_len_63min10kb)) +
   
-  scale_y_continuous(limits=c(50000, 840000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(100000, 800000, 100000)) +
+  scale_y_continuous(limits=c(50000, 720000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(100000, 800000, 100000)) +
 
 # set up the panel
 theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Average RoH length (Mbp)")
@@ -335,7 +335,7 @@ aveRohss = aveRohss +
   stat_summary(fun=median, geom="crossbar", colour='gray30', width=.2, lwd=.4)
   
 # perform wilcox tests to compare groups
-aveRohss = aveRohss + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(600000, 800000), size=3, colour="gray20") #+
+aveRohss = aveRohss + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(450000, 700000), size=3, colour="gray20") #+
   
   #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
 
@@ -346,13 +346,13 @@ aveRohss
 
 
 
-#### Visualize maximum RoH length in the 10 largest scaffolds
+#### Visualize maximum RoH length
 
 Use the function written before to customize the y axis here too
 
 ```{r}
 maxRohss = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' & country!="DRC"),
-       aes(time_window, max_RoH_len)) +
+       aes(time_window, Max_RoH_len_63min10kb)) +
   
   # customize the y axis scale
   scale_y_continuous(limits=c(100000, 16000000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(1000000, 16000000, 2000000)) +
@@ -404,58 +404,6 @@ erosionss
 pdf("WR_v5_FigS8_GenomicErosionSS.pdf",  useDingbats = F)
 erosionss
 dev.off()
-```
-
-
-
-
-
-Comparison of RoH analyses: with 10 scaffolds, 63 scaffolds and only Tv
-
-```{r}
-data$time_window=factor(data$time_window,levels=c("NWRpre", "NWRpost", "SWRpre", "SWRpost"))
-```
-
-```{r}
-ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
-       aes(sample_name)) +
-   facet_wrap(~time_window, scales = "free_x") +
- 
-  
-  geom_point(aes(sample_name, Froh), colour="black") +
-  geom_point(aes(sample_name, Froh63_min10kb), colour="blue") +
-  geom_point(aes(sample_name, Froh63_min10kb_Tv), colour="green") +
-  
-  theme(axis.text.x=element_text(angle=80, hjust=1, size=8))
-```
-
-
-
-```{r}
-ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
-       aes(sample_name)) +
-   facet_wrap(~time_window, scales = "free_x") +
- 
-  
-  geom_point(aes(sample_name, ave_RoH_len), colour="black") +
-  geom_point(aes(sample_name, Avg_RoH_len_63min10kb), colour="blue") +
-  geom_point(aes(sample_name, Avg_RoH_len_63min10kb_Tv), colour="green") +
-  
-  theme(axis.text.x=element_text(angle=80, hjust=1, size=8))
-```
-
-
-```{r}
-ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
-       aes(sample_name)) +
-   facet_wrap(~time_window, scales = "free_x") +
- 
-  
-  geom_point(aes(sample_name, max_RoH_len), colour="black") +
-  geom_point(aes(sample_name, Max_RoH_len_63min10kb), colour="blue") +
-  geom_point(aes(sample_name, Max_RoH_len_63min10kb_Tv), colour="green") +
-  
-  theme(axis.text.x=element_text(angle=80, hjust=1, size=8))
 ```
 
 
