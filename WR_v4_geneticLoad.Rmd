@@ -24,7 +24,7 @@ library(gridExtra)
 
 
 
-Open error rates table
+Open input data
 ```{r}
 snpeff = read.csv("snpeff_output.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 ```
@@ -79,7 +79,8 @@ snpeff$time_window=factor(snpeff$time_window,levels=c("SWRpre", "SWRpost"))
 homratio1 = ggplot(snpeff, aes(time_window, lof_syn_ratio)) + theme_bw() +
   
   # plot distribution and points
-  geom_violin(aes(group=time_window, colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
+  #geom_violin(aes(group=time_window, colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
+  geom_boxplot(aes(group=time_window, colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
   geom_point(aes(time_window, lof_syn_ratio, group=time_window, colour=time_window), shape=17, cex=2, alpha=.7) +
   
   # add colour scale
@@ -91,7 +92,7 @@ homratio1 = ggplot(snpeff, aes(time_window, lof_syn_ratio)) + theme_bw() +
   theme(legend.position = "none", axis.text.x=element_text(size=12)) +
   
   # add stats and an unpaired wilcox test to compare the medians
-  stat_summary(fun=median, geom="crossbar", colour='gray30', width=.12, lwd=.4) +
+  #stat_summary(fun=median, geom="crossbar", colour='gray30', width=.12, lwd=.4) +
   
   # run comparison with wilcox test
   stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), label.y = c(0.026, 0.027), colour="gray20") +
@@ -154,7 +155,8 @@ homratio3 = ggplot(snpeff, aes(cluster, lof_syn_ratio)) + theme_bw() +
   theme(legend.position = "none", axis.text.x=element_text(angle=30, hjust=1, size=12)) +
   
   stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre West", "SWRpre East")), method.args = list(alternative = "greater"), label.y = c(0.026)) +
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpost wild", "SWRpost captive")), method.args = list(alternative = "two.sided"), label.y = c(0.024)) 
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpost wild", "SWRpost captive")), method.args = list(alternative = "two.sided"), label.y = c(0.024)) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre East", "SWRpost wild")), method.args = list(alternative = "less"), label.y = c(0.022))
 
   #geom_text_repel(data=snpeff, aes(label=sample), segment.size=.15, size=2)
 
@@ -352,6 +354,159 @@ ggplot(snpeff, aes(cluster, lof_intergenic_ratio)) + theme_bw() +
 
 
 ```
+
+
+
+
+###################################################################################################################################
+# NEW GENETIC LOAD ANALYSIS
+
+
+
+Open input data
+```{r}
+load = read.csv("WR_v5_GeneticLoad.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+```
+
+```{r}
+loadss = subset(load, n_sites_minDP8 > 10000000)
+```
+
+
+Visualize
+
+```{r}
+load$time_window=factor(load$time_window,levels=c("NWRpre", "NWRpost" ,"SWRpre", "SWRpost"))
+loadss$time_window=factor(loadss$time_window,levels=c("NWRpre", "SWRpre", "SWRpost"))
+```
+
+
+
+LoF to synonymous ratio
+```{r}
+# for all samples
+A = ggplot(load, aes(time_window, lof.syn)) + theme_bw() +
+  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost")), method.args = list(alternative = "two.sided")) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "two.sided")) +
+  theme(legend.position = "none") +
+  geom_text_repel(label=load$lab_ID, size=2)
+A
+
+# excluding samples with few sites
+B = ggplot(loadss, aes(time_window, lof.syn)) + theme_bw() +
+  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  scale_color_manual(values= (c("gold3", "royalblue4", "steelblue3"))) +
+  
+  #stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost")), method.args = list(alternative = "greater")) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "two.sided")) +
+  theme(legend.position = "none") +
+  geom_text_repel(label=loadss$lab_ID, size=2)
+
+B
+```
+
+
+Missense to synonymous ratio (dN/dS)
+```{r}
+load$time_window=factor(load$time_window,levels=c("NWRpre", "NWRpost" ,"SWRpre", "SWRpost"))
+loadss$time_window=factor(loadss$time_window,levels=c("NWRpre", "SWRpre", "SWRpost"))
+```
+
+```{r}
+
+# for all samples
+C = ggplot(load, aes(time_window, mis.syn)) + theme_bw() +
+  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost")), method.args = list(alternative = "two.sided")) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "two.sided")) +
+  theme(legend.position = "none") +
+  geom_text_repel(label=load$lab_ID, size=2)
+C
+
+
+# excluding samples with few sites
+D = ggplot(loadss, aes(time_window, mis.syn)) + theme_bw() +
+  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  scale_color_manual(values= (c("gold3", "royalblue4", "steelblue3"))) +
+  
+  #stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost")), method.args = list(alternative = "greater")) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "two.sided")) +
+  theme(legend.position = "none") +
+  geom_text_repel(label=loadss$lab_ID, size=2)
+D
+
+
+```
+
+
+
+
+```{r}
+pdf("WR_v5_LoadMinDP8_test2.pdf", width=9, useDingbats = F)
+ggarrange(A, B, C, D)
+dev.off()
+```
+
+
+```{r}
+ggplot(load, aes(time_window, hom_genes_min1_lof)) + theme_bw() +
+  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost")), method.args = list(alternative = "two.sided")) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "two.sided")) +
+  theme(legend.position = "none") +
+  geom_text_repel(label=load$lab_ID, size=2)
+
+
+ggplot(loadss, aes(time_window, hom_genes_min1_lof)) + theme_bw() +
+  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) + 
+  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
+  scale_color_manual(values= (c("gold3", "royalblue4", "steelblue3"))) +
+  
+  #stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost")), method.args = list(alternative = "greater")) +
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "two.sided")) +
+  theme(legend.position = "none") +
+  geom_text_repel(label=loadss$lab_ID, size=2)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

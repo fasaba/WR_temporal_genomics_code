@@ -91,7 +91,7 @@ data$time_window=factor(data$time_window,levels=c("NWRpre","NWRpost","SWRpre", "
 ```{r}
 # plot het values per time window
 fRoh = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
-       aes(time_window, Froh63_min10kb)) +
+       aes(time_window, Froh_100kbmin)) +
   
   # format scale in y axis
   scale_y_continuous(limits=c(0, 0.55), breaks=seq(0, 0.55, 0.1), labels=scales::number_format(accuracy = 0.01)) +
@@ -130,9 +130,9 @@ fRoh
 Visualize average RoH length in the 10 largest scaffolds
 ```{r}
 aveRoh = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
-       aes(time_window, Avg_RoH_len_63min10kb)) +
+       aes(time_window, avg_roh_len_100kbmin)) +
   
-  scale_y_continuous(limits=c(50000, 720000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(100000, 800000, 100000)) +
+  scale_y_continuous(limits=c(100000, 1000000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(100000, 1000000, 200000)) +
 
 # set up the panel
 theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Average RoH length (Mbp)")
@@ -152,7 +152,7 @@ aveRoh = aveRoh +
   stat_summary(fun=median, geom="crossbar", colour='gray30', width=.2, lwd=.4)
   
 # perform wilcox tests to compare groups
-aveRoh = aveRoh + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(450000, 700000), size=3, colour="gray20") #+
+aveRoh = aveRoh + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(700000, 960000), size=3, colour="gray20") #+
   
   #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
 
@@ -170,10 +170,10 @@ Use the function written before to customize the y axis here too
 
 ```{r}
 maxRoh = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461'),
-       aes(time_window, Max_RoH_len_63min10kb)) +
+       aes(time_window, max_roh_len_100kbmin)) +
   
   # customize the y axis scale
-  scale_y_continuous(limits=c(100000, 16000000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(1000000, 16000000, 2000000)) +
+  scale_y_continuous(limits=c(0, 15000000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(1000000, 14000000, 2000000)) +
 
 # set up the panel
 theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Maximum RoH length (Mbp)")
@@ -194,7 +194,7 @@ maxRoh = maxRoh +
   stat_summary(fun=median, geom="crossbar", colour='gray30', width=.2, lwd=.4) +
   
   # run the wilcox tests to compare groups
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(14000000, 15000000), size=3, colour="gray20") #+
+  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(13500000, 14500000), size=3, colour="gray20") #+
   
   #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
   
@@ -219,7 +219,7 @@ erosion
 
 
 ```{r}
-pdf("WR_v5_Fig4_GenomicErosion.pdf", useDingbats = F)
+pdf("WR_v5_Fig4_GE100kbmin.pdf", useDingbats = F)
 erosion
 dev.off()
 ```
@@ -276,7 +276,7 @@ gw_het_ss
 # plot Froh values per time window
 fRohss = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' 
                             & country!="DRC"),
-       aes(time_window, Froh63_min10kb)) +
+       aes(time_window, Froh_100kbmin)) +
   
   # format scale in y axis
   scale_y_continuous(limits=c(0, 0.55), breaks=seq(0, 0.55, 0.1), labels=scales::number_format(accuracy = 0.01)) +
@@ -313,9 +313,9 @@ fRohss
 Visualize average RoH length in the 10 largest scaffolds
 ```{r}
 aveRohss = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' & country!="DRC"),
-       aes(time_window, Avg_RoH_len_63min10kb)) +
+       aes(time_window, avg_roh_len_100kbmin)) +
   
-  scale_y_continuous(limits=c(50000, 720000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(100000, 800000, 100000)) +
+  scale_y_continuous(limits=c(100000, 1000000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(100000, 1000000, 200000)) +
 
 # set up the panel
 theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Average RoH length (Mbp)")
@@ -335,7 +335,7 @@ aveRohss = aveRohss +
   stat_summary(fun=median, geom="crossbar", colour='gray30', width=.2, lwd=.4)
   
 # perform wilcox tests to compare groups
-aveRohss = aveRohss + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(450000, 700000), size=3, colour="gray20") #+
+aveRohss = aveRohss + stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost"), c("SWRpre", "SWRpost")), method.args = list(alternative = "less"), label.y=c(700000, 960000), size=3, colour="gray20") #+
   
   #geom_text_repel(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01'), aes(label=sample_name), segment.size=.15, size=2)
 
@@ -352,10 +352,10 @@ Use the function written before to customize the y axis here too
 
 ```{r}
 maxRohss = ggplot(data=subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' & country!="DRC"),
-       aes(time_window, Max_RoH_len_63min10kb)) +
+       aes(time_window, max_roh_len_100kbmin)) +
   
   # customize the y axis scale
-  scale_y_continuous(limits=c(100000, 16000000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(1000000, 16000000, 2000000)) +
+scale_y_continuous(limits=c(0, 15000000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(1000000, 14000000, 2000000)) +
 
 # set up the panel
 theme_bw() + theme(legend.position = "none") + labs(x=NULL, y="Maximum RoH length (Mbp)")
@@ -401,7 +401,7 @@ erosionss
 
 
 ```{r}
-pdf("WR_v5_FigS8_GenomicErosionSS.pdf",  useDingbats = F)
+pdf("WR_v5_FigS8_GESSmin100kb.pdf",  useDingbats = F)
 erosionss
 dev.off()
 ```

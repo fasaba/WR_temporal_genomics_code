@@ -23,7 +23,7 @@ library(gridExtra)
 
 Open metadata and genomic metrics table
 ```{r}
-data = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+data = read.csv("WR_TableS1_v6.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 ```
 
 
@@ -46,6 +46,7 @@ SWRpostH = datassHet[datassHet$time_window == "SWRpost",]
 ```
 
 
+Check the number of inviduals in each group
 ```{r}
 dim(NWRpreH)
 dim(NWRpostH)
@@ -86,7 +87,7 @@ datassHet %>%
 
 ## RoH length and FRoH
 
-Remove the 6 samples that either: have depth <5x (4 samples) and/or have error rates >1% (4 extra samples) for comparisons of RoH and Froh
+Remove the samples that either: have depth <5x (4 samples) and/or have error rates >1% (4 extra samples) for comparisons of RoH and Froh
 ```{r}
 datassF = subset(data, lab_ID!='mwr_TG0450' & lab_ID!='mwr_TG0451' & lab_ID!='mwr_TG0456' & lab_ID!='mwr_TGF01' & lab_ID!='mwr_TG0452' & lab_ID!='mwr_TG0461' & lab_ID!='mwr_TGF02' & lab_ID!='mwr_TGF04')
 dim(datassF)
@@ -101,6 +102,7 @@ SWRpostF = datassF[datassF$time_window == "SWRpost",]
 
 ```
 
+Check number of individuals in each group
 ```{r}
 dim(NWRpreF)
 dim(NWRpostF)
@@ -115,12 +117,12 @@ dim(SWRpostF)
 #### NWR
 Group comparison
 ```{r}
-wilcox.test(NWRpreF$Froh, NWRpostF$Froh, paired=F, alternative = "less")
+wilcox.test(NWRpreF$Froh_100kbmin, NWRpostF$Froh_100kbmin, paired=F, alternative = "less")
 ```
 
 #### SWR
 ```{r}
-wilcox.test(SWRpreF$Froh, SWRpostF$Froh, paired=F, alternative = "less")
+wilcox.test(SWRpreF$Froh_100kbmin, SWRpostF$Froh_100kbmin, paired=F, alternative = "less")
 ```
 
 
@@ -134,7 +136,7 @@ datassF$time_window=factor(datassF$time_window, levels=c("NWRpre","NWRpost","SWR
 ```{r}
 datassF %>%
   group_by(time_window) %>%
-  summarize(min=min(Froh), max=max(Froh), median=median(Froh))
+  summarize(min=min(Froh_100kbmin), max=max(Froh_100kbmin), median=median(Froh_100kbmin))
 ```
 
 
@@ -143,17 +145,17 @@ datassF %>%
 #### NWR
 Group comparison
 ```{r}
-wilcox.test(NWRpreF$ave_RoH_len, NWRpostF$ave_RoH_len, paired=F, alternative = "less")
+wilcox.test(NWRpreF$avg_roh_len_100kbmin, NWRpostF$avg_roh_len_100kbmin, paired=F, alternative = "less")
 ```
 
 #### SWR
 ```{r}
-wilcox.test(SWRpreF$ave_RoH_len, SWRpostF$ave_RoH_len, paired=F, alternative = "less")
+wilcox.test(SWRpreF$avg_roh_len_100kbmin, SWRpostF$avg_roh_len_100kbmin, paired=F, alternative = "less")
 ```
 
 
 
-### Delta estimators for FRoH
+### Delta estimators for average roh length
 Delta estimators
 ```{r}
 datassF$time_window=factor(datassF$time_window, levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
@@ -162,7 +164,7 @@ datassF$time_window=factor(datassF$time_window, levels=c("NWRpre","NWRpost","SWR
 ```{r}
 datassF %>%
   group_by(time_window) %>%
-  summarize(min=min(ave_RoH_len), max=max(ave_RoH_len), median=median(ave_RoH_len))
+  summarize(min=min(avg_roh_len_100kbmin), max=max(avg_roh_len_100kbmin), median=median(avg_roh_len_100kbmin))
 ```
 
 
@@ -172,12 +174,12 @@ datassF %>%
 #### NWR
 Group comparison
 ```{r}
-wilcox.test(NWRpreF$max_RoH_len, NWRpostF$max_RoH_len, paired=F, alternative = "less")
+wilcox.test(NWRpreF$max_roh_len_100kbmin, NWRpostF$max_roh_len_100kbmin, paired=F, alternative = "less")
 ```
 
 #### SWR
 ```{r}
-wilcox.test(SWRpreF$max_RoH_len, SWRpostF$max_RoH_len, paired=F, alternative = "less")
+wilcox.test(SWRpreF$max_roh_len_100kbmin, SWRpostF$max_roh_len_100kbmin, paired=F, alternative = "less")
 ```
 
 
@@ -191,12 +193,16 @@ datassF$time_window=factor(datassF$time_window, levels=c("NWRpre","NWRpost","SWR
 ```{r}
 datassF %>%
   group_by(time_window) %>%
-  summarize(min=min(max_RoH_len), max=max(max_RoH_len), median=median(max_RoH_len))
+  summarize(min=min(max_roh_len_100kbmin), max=max(max_roh_len_100kbmin), median=median(max_roh_len_100kbmin))
 ```
 
 
 
+
+
 #################################################################################################################################
+#################################################################################################################################
+
 
 
 ## Subsampling NWRpre to rule out the effect of population structure in genomic erosion
@@ -217,7 +223,7 @@ SWRpostHnoDRC = datassHetnoDRC[datassHetnoDRC$time_window == "SWRpost",]
 
 ```
 
-
+Check number of individuals in each group
 ```{r}
 dim(NWRpreHnoDRC)
 dim(NWRpostHnoDRC)
@@ -287,7 +293,7 @@ dim(SWRpostFnoDRC)
 #### NWR
 Group comparison
 ```{r}
-wilcox.test(NWRpreFnoDRC$Froh, NWRpostFnoDRC$Froh, paired=F, alternative = "less")
+wilcox.test(NWRpreFnoDRC$Froh_100kbmin, NWRpostFnoDRC$Froh_100kbmin, paired=F, alternative = "less")
 ```
 
 ### Delta estimators for FRoH
@@ -299,7 +305,7 @@ datassFnoDRC$time_window=factor(datassFnoDRC$time_window, levels=c("NWRpre","NWR
 ```{r}
 datassFnoDRC %>%
   group_by(time_window) %>%
-  summarize(min=min(Froh), max=max(Froh), median=median(Froh))
+  summarize(min=min(Froh_100kbmin), max=max(Froh_100kbmin), median=median(Froh_100kbmin))
 ```
 
 
@@ -318,7 +324,7 @@ Calculate the delta estimator for subsampled NWR comparison
 
 #### Group comparison
 ```{r}
-wilcox.test(NWRpreFnoDRC$ave_RoH_len, NWRpostFnoDRC$ave_RoH_len, paired=F, alternative = "less")
+wilcox.test(NWRpreFnoDRC$avg_roh_len_100kbmin, NWRpostFnoDRC$avg_roh_len_100kbmin, paired=F, alternative = "less")
 ```
 
 #### Delta estimators
@@ -330,17 +336,8 @@ datassFnoDRC$time_window=factor(datassFnoDRC$time_window, levels=c("NWRpre","NWR
 ```{r}
 datassFnoDRC %>%
   group_by(time_window) %>%
-  summarize(min=min(ave_RoH_len), max=max(ave_RoH_len), median=median(ave_RoH_len))
+  summarize(min=min(avg_roh_len_100kbmin), max=max(avg_roh_len_100kbmin), median=median(avg_roh_len_100kbmin))
 ```
-
-Calculate the delta estimator for subsampled NWR comparison
-```{r}
-# With the values from the table above, do median post-bottleneck value minus median pre-bottleneck value, divided by the median pre-bottleneck value
-(291588.0-217302.0)/217302.0
-
-# the result is the increase in average RoH length between NWRpre and post (excluding DRC)
-```
-
 
 
 
@@ -351,7 +348,7 @@ Calculate the delta estimator for subsampled NWR comparison
 
 #### Group comparison
 ```{r}
-wilcox.test(NWRpreFnoDRC$max_RoH_len, NWRpostFnoDRC$max_RoH_len, paired=F, alternative = "less")
+wilcox.test(NWRpreFnoDRC$max_roh_len_100kbmin, NWRpostFnoDRC$max_roh_len_100kbmin, paired=F, alternative = "less")
 ```
 
 #### Delta estimators
@@ -363,17 +360,7 @@ datassFnoDRC$time_window=factor(datassFnoDRC$time_window, levels=c("NWRpre","NWR
 ```{r}
 datassFnoDRC %>%
   group_by(time_window) %>%
-  summarize(min=min(max_RoH_len), max=max(max_RoH_len), median=median(max_RoH_len))
-```
-
-
-
-Calculate the delta estimator for subsampled NWR comparison
-```{r}
-# With the values from the table above, do median post-bottleneck value minus median pre-bottleneck value, divided by the median pre-bottleneck value
-(5808820-4330095)/4330095
-
-# the result is the increase in maximum RoH length between NWRpre and post (excluding DRC)
+  summarize(min=min(max_roh_len_100kbmin), max=max(max_roh_len_100kbmin), median=median(max_roh_len_100kbmin))
 ```
 
 

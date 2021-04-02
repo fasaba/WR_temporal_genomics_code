@@ -220,10 +220,10 @@ nwr = ggplot(evecNWR, aes(x=PC1, y=PC2)) +
   theme(panel.background = element_rect(fill='white', colour='black'), axis.text.x = element_text(colour='black'), axis.text.y = element_text(colour='black'), 
         strip.background = element_rect(size=.2, colour="black", fill ="#FFA5004D"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         legend.title=element_blank(), legend.key=element_rect(fill="white", colour="white"), axis.title=element_text(size=10), legend.text=element_text(size=7), legend.key.size=unit(.4, "cm"),
-        legend.box.margin=margin(-10,-10,-10,-10), plot.margin=margin(0,2,0,0)) 
+        legend.box.margin=margin(-10,-10,-10,-10), plot.margin=margin(0,2,0,0)) +
   
   #guides(colour = guide_legend(order = 1), shape = guide_legend(order = 2)) 
-  #+ geom_text_repel(data=evecNWR, aes(label=sample_name), segment.size=.15, size=2)
+  geom_text_repel(data=evecNWR, aes(label=sample_name), segment.size=.15, size=2)
 
 nwr
 ```
