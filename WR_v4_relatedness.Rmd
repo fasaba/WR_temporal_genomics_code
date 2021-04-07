@@ -5,6 +5,57 @@ date: "November 23, 2020"
 output: html_document
 ---
 
+
+
+
+## Computing pairwise relatedness with ngsRelate
+
+
+```{bash}
+########################################
+# Relatedness test for each subspecies 
+######################
+
+
+## Input needed: genotype likelihoods as log scaled GL in binary format (.glf), frequencies (.freq) and sample names (IDlist.txt)
+
+
+# Make .glf file from .beagle file
+
+zcat NWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.beagle.gz | tail -n +2 | perl -an -e 'for($i=3; $i<=$#F; $i++){print(pack("d",($F[$i]==0 ? -inf : log($F[$i]))))}'  > NWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.glf
+
+zcat SWR.27I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.beagle.gz | tail -n +2 | perl -an -e 'for($i=3; $i<=$#F; $i++){print(pack("d",($F[$i]==0 ? -inf : log($F[$i]))))}'  > SWR.27I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.glf
+
+## before using it I checked that its size in bytes is equal to (N_IND * N_SITES * 8 * 3)
+
+## compress the glf files
+gzip NWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.glf
+gzip SWR.27I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.glf
+
+
+# Make .freq file from .maf file
+zcat NWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.mafs.gz | cut -f6 | sed 1d > NWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.freq
+
+zcat SWR.27I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.mafs.gz | cut -f6 | sed 1d > SWR.27I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.freq
+
+
+# Make ID file
+cut -d '/' -f9 NWR_total_bamlist.txt | cut -d . -f1 > NWR_IDlist.txt
+cut -d '/' -f9 SWR_total_bamlist.txt | cut -d . -f1 > SWR_IDlist.txt
+
+
+# Run ngsRelate
+ngsRelate -g NWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.glf.gz  -f NWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.freq -n 25 -z NWR_IDlist.txt -O NWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.res
+
+ngsRelate -g SWR.27I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.glf.gz  -f SWR.27I.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.freq -n 27 -z SWR_IDlist.txt -O SWR.27.above13Mb_NoSexChr_NonMaskedRegions_GL2.tv.res
+```
+
+
+
+
+
+## Parsing output and visualizing results
+
 Load required libraries
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 library(ggplot2)
@@ -75,7 +126,7 @@ head(swr_rels)
 
 Open metadata and genomic metrics table
 ```{r}
-md = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+md = read.csv("WR_TableS1_v6.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 ```
 
 

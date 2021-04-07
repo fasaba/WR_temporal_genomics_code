@@ -25,13 +25,15 @@ library(gridExtra)
 
 
 
-Open metadata and genomic metrics table
+Open the data
 ```{r}
 roh = read.table("WR.RoH.minqual30.minlen100kb.txt",  h=F, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 dim(roh)
 colnames(roh) = c("RG", "sample", "scaffold", "start", "stop", "length", "sites", "quality")
 ```
 
+
+Order the RoH by length per sample, and calculate the fraction of the total length that the RoH contribute to
 ```{r}
 roh_order = roh[with(roh, order(sample, length)),]
 
@@ -43,11 +45,15 @@ roh_order$rohfrac <- (roh_order$csum)/1877174582
 
 
 
+Filter out the samples that should not be included in this analysis
 ```{r}
-roh_order_ss = roh_order[roh_order$sample!='mwr_TG0450' & roh_order$sample!='mwr_TG0451' & roh_order$sample!='mwr_TG0456' & roh_order$sample!='mwr_TGF01' & roh_order$sample!='mwr_TGF02' & roh_order$sample!='mwr_TGF04' & roh_order$sample!='mwr_TG0452' & roh_order$sample!='mwr_TG0461', ]
+roh_order_ss = filter(roh_order, sample!='mwr_TG0450' & sample!='mwr_TG0451' & sample!='mwr_TG0456' & sample!='mwr_TGF01' & sample!='mwr_TGF02' & sample!='mwr_TGF04' & sample!='mwr_TG0452' & sample!='mwr_TG0461')
+
+roh_order_ss$sample <- factor(roh_order_ss$sample)
 ```
 
 
+Add info about the time window of each sample
 ```{r}
 library(dplyr)
 
@@ -74,6 +80,7 @@ roh_order_ss$time_window=factor(roh_order_ss$time_window,levels=c("NWRpre","NWRp
 ```
 
 
+Visualize
 ```{r}
 rohage = ggplot(roh_order_ss, aes(length, rohfrac, group=sample, colour=time_window)) + geom_line() + theme_bw() +
   
@@ -81,7 +88,8 @@ rohage = ggplot(roh_order_ss, aes(length, rohfrac, group=sample, colour=time_win
   scale_x_continuous(limits=c(100000, 13400000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(1000000, 13400000, 2000000 )) +
   xlab("Length of RoH") +
   ylab("Cumulative fraction of total length in RoH (Mbp)") +
-  theme(legend.title=element_blank())
+  theme(legend.title=element_blank()) +
+  geom_text_repel(label=roh_order_ss$sample)
 rohage  
 
 ```

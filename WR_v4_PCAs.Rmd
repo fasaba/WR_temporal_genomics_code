@@ -5,6 +5,30 @@ date: "October 29, 2020"
 output: html_document
 ---
 
+
+
+# Computing covariance matrices
+
+```{bash}
+# For all unrelated samples
+python pcangsd-0.973/pcangsd.py -beagle WR.49I.above13Mb_NoSexChr_NonMaskedRegions_GL2_unrelated.tv.beagle.gz -o WR.49I.above13Mb_NoSexChr_NonMaskedRegions_GL2_unrelated.tv -threads 20 -maf_iter 200
+
+
+# Per subspecies
+## NWR
+python pcangsd-0.973/pcangsd.py -beagle NWR.24I.above13Mb_NoSexChr_NonMaskedRegions_GL2_unrelated.tv.beagle.gz -o NWR.24I.above13Mb_NoSexChr_NonMaskedRegions_GL2_unrelated.tv -threads 20 -maf_iter 200
+
+## SWR
+python pcangsd-0.973/pcangsd.py -beagle SWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2_unrelated.tv.beagle.gz -o SWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2_unrelated.tv -threads 20 -maf_iter 200
+
+```
+
+
+
+
+
+# Parsing output and visualization
+
 Load required libraries
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 library(ggplot2)
