@@ -1,0 +1,32 @@
+
+##############################################################################
+# Admixture analysis with NGSadmix of 49 unrelated white rhinoceros samples
+##################################################
+
+# Run NGSadmix for a panel of GL for 40 unrelated samples
+
+## write a set of 20 command lines (repetitions) for each value of K and from the same input GL panel 
+for K in {2..10}; do for i in {1..20}; do echo "PATH/TO/angsd/misc/NGSadmix -likes WR.49I.above13Mb_NoSexChr_NonMaskedRegions_GL2_unrelated.tv.beagle.gz -outfiles WR_tv_K"$K"."$i" -K $K -minMaf 0.05 -minInd 47" ; done > K"$K".sh ; done
+
+## run each script 
+
+## from the output lop file for each K, choose the run of highest log-likelihood
+for K in {2..10} ; do for i in WR*K$K*.log ; do echo $i ; grep "best like" $i ; done | paste - - | sed 's/like=//g' | sed 's/ /\t/g' | sort -nrk3,3 | head -1 ; done
+
+
+# Visualize NGSadmix output for the runs of highest likelihood with pong
+
+pong -m filemap.txt -i ind2pop_samples.txt -l colourfile.txt -n pop_order.txt
+
+## filemap relates run to K to corresponding file, e.g.:
+r21k2	2	WR_nonRelated_tv_K2.21.qopt
+r36k3	3	WR_nonRelated_tv_K3.36.qopt
+r46k4	4	WR_nonRelated_tv_K4.46.qopt
+r11k5	5	WR_nonRelated_tv_K5.11.qopt
+r14k6	6	WR_nonRelated_tv_K6.14.qopt
+
+## ind2pop_samples.txt contains the list of sample names in the same order as in the input beagle file
+
+## colourfile.txt is a list of colour codes specifying the chosen colour palette
+
+## pop_order.txt specifies the order in which the samples are to appear on the plot (different from that of the beagle file)

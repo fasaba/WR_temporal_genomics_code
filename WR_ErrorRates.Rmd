@@ -5,6 +5,24 @@ date: "October 8, 2020"
 output: html_document
 ---
 
+
+
+## Estimating error rates for individual bam files with ANGSD
+```{bash}
+# index the fasta files you want to use as best sample and outgroup in the Fastas folder
+samtools faidx /PATH/TO/BEST/SAMPLE/wr_P9109_110.fa
+samtools faidx /PATH/TO/OUTGROUP/SAMPLE/OP5012.fa
+
+# Error estimation using an outgroup (black rhino OP5012) and an error free individual (modern white rhino wr_SRR5852749)
+module load angsd/0.921
+angsd -doAncError 1 -anc /PATH/TO/OUTGROUP/SAMPLE/OP5012.fa -ref /PATH/TO/BEST/SAMPLE/wr_P9109_110.fa -out WR_ErrorRates_P9109_110best_BRout.Est -bam WR_52I_bamlist.txt
+```
+
+
+
+
+## Visualization of results
+
 Load required libraries
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 library(ggplot2)
@@ -87,13 +105,66 @@ E
 
 
 
-
 Save the plot
 ```{r eval=FALSE, include=FALSE}
 pdf("WR_v5_FigS3_ErrorRates.pdf", height=5, useDingbats = F)
 E
 dev.off()
 ```
+
+
+
+
+### Calculate a transversion composite error rate with which to correct the Het estimates to buffer the effect of the SRR batch
+
+Calculate a composite error rate at Tv sites by summing up all error rates per row
+```{r}
+smalldata %>% 
+  dplyr::select(GtoT, TtoG, AtoT, TtoA, AtoC, CtoA) %>% 
+  rowSums(na.rm=TRUE) -> smalldata$ErTv
+
+head(smalldata)
+```
+
+
+Save these error rates (single and composite) as a separate file 
+```{r}
+write.table(smalldata, file="WR_Errors_ErTv.csv", row.names=F, col.names=T, sep=",")
+```
+
+
+
+
+### Calculate the corrected het by operating with the composite error rate and the het estimate
+
+```{r}
+smalldataHc = cbind(smalldataH, smalldata$ErTv)
+head(smalldataHc)
+
+# subtract from the Het estimate the excess driven by transversion error rates
+smalldataHc = smalldataHc %>% 
+  mutate(HET3x_corrected = HET3x-(HET3x*smalldata$ErTv), HET5x_corrected = HET5x-(HET5x*smalldata$ErTv) )
+
+```
+
+
+
+Visualise the new het estimates
+```{r}
+tinydataHc = smalldataHc %>%
+  dplyr::select(ID, HET3x, HET5x, HET3x_corrected, HET5x_corrected)
+
+tinydataHc = reshape2::melt(tinydataHc)
+```
+
+
+```{r}
+P = ggplot(tinydataHc, aes(ID, value, colour=variable)) + geom_point() + theme_bw() +
+  theme(axis.text.x=element_text(angle=80, hjust=1), legend.title = element_blank(), legend.position = "top")
+  
+P
+```
+
 
 
 
@@ -159,79 +230,6 @@ correlate_vars(smalldataH, "HET5x", "AtoC", "ID")
 correlate_vars(smalldataH, "HET5x", "CtoA", "ID")
 
 ```
-
-
-
-
-The following error rates correlate significantly with Het estimates:
-G-to-T
-T-to-G (marginally)
-A-to-T
-T-to-A
-A-to-C (marginally)
-C-to-A
-
-This is probably due to the samples in the SRR which show higher error rates at transversion sites than the remaining batches.
-
-On the other hand, Het estimates with 5x filtering seem to correlate with transition error rates too, however this seems to be driven by the low depth of coverage samples that will be excluded (TG0450, TG0451, TG0456, TGF01).
-
-
-
-### Calculate a transversion composite error rate with which to correct the Het estimates to buffer the effect of the SRR batch
-
-Calculate a composite error rate at Tv sites by summing up all error rates per row
-```{r}
-smalldata %>% 
-  dplyr::select(GtoT, TtoG, AtoT, TtoA, AtoC, CtoA) %>% 
-  rowSums(na.rm=TRUE) -> smalldata$ErTv
-
-head(smalldata)
-```
-
-
-Save these error rates (single and composite) as a separate file 
-```{r}
-write.table(smalldata, file="WR_Errors_ErTv.csv", row.names=F, col.names=T, sep=",")
-```
-
-
-
-
-
-
-### Calculate the corrected het by operating with the composite error rate and the het estimate
-
-```{r}
-smalldataHc = cbind(smalldataH, smalldata$ErTv)
-head(smalldataHc)
-
-# subtract from the Het estimate the excess driven by transversion error rates
-smalldataHc = smalldataHc %>% 
-  mutate(HET3x_corrected = HET3x-(HET3x*smalldata$ErTv), HET5x_corrected = HET5x-(HET5x*smalldata$ErTv) )
-
-```
-
-
-
-Visualise the new het estimates
-```{r}
-tinydataHc = smalldataHc %>%
-  dplyr::select(ID, HET3x, HET5x, HET3x_corrected, HET5x_corrected)
-
-tinydataHc = reshape2::melt(tinydataHc)
-```
-
-
-
-```{r}
-P = ggplot(tinydataHc, aes(ID, value, colour=variable)) + geom_point() + theme_bw() +
-  theme(axis.text.x=element_text(angle=80, hjust=1), legend.title = element_blank(), legend.position = "top")
-  
-P
-```
-
-
-
 
 
 

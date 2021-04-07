@@ -6,6 +6,17 @@ output: html_document
 ---
 
 
+
+# Compute the depth of coverage per scaffold (those >13Mbp) and per sample
+```{bash}
+for bamfile in PATH/TO/BAMFILES/*.bam; do samtools bedcov scaffold_list.bed $bamfile ; done
+```
+
+
+
+
+# Visualize depth of coverage per sample, absolute and normalized
+
 Load required libraries
 ```{r}
 library(ggplot2)
@@ -16,7 +27,7 @@ library(cowplot)
 library(ggpubr)
 ```
 
-### Choice of scaffolds from the reference assembly based on size
+## 1. Choice of scaffolds from the reference assembly based on size
 
 Total length of the assembly
 ```{r}
@@ -61,7 +72,7 @@ Y
 
 ######################################################################
 
-### Test of depth to identify scaffolds from sex chromosomes among the n = 66 > 13 Mbp
+## 2. Test of depth to identify scaffolds from sex chromosomes among the n = 66 > 13 Mbp
 
 Read in files
 ```{r}
@@ -125,19 +136,19 @@ Z
 
 
 
-### Save scaffold-related plots as a supplementary figure
+Save scaffold-related plots as a supplementary figure
 
 ```{r}
-pdf('WR_v5_FigS1.pdf', useDingbats = F)
- plot_grid(Y, Z, nrow=2, ncol=1, labels=c('A', 'B'), label_size = 10, align="v")
-dev.off()
+# pdf('WR_v5_FigS2.pdf', useDingbats = F)
+#  plot_grid(Y, Z, nrow=2, ncol=1, labels=c('A', 'B'), label_size = 10, align="v")
+# dev.off()
 ```
 
 
 
 ##############################################################################
 
-### Depth of coverage per sample across the final chosen scaffolds (n = 63)
+## 3. Depth of coverage per sample across the final chosen scaffolds (n = 63)
 
 
 Read in files
@@ -281,11 +292,11 @@ figS2v5
 ```
 
 
-
+Save as supplementary figure
 ```{r}
-pdf('WR_v5_FigS2_v2.pdf', useDingbats = F)
-figS2v5
-dev.off()
+# pdf('WR_v5_FigS1_v2.pdf', useDingbats = F)
+# figS2v5
+# dev.off()
 
 ```
 

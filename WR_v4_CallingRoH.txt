@@ -1,0 +1,30 @@
+
+
+######################################
+# Calling RoH with BCFtools RoH
+#######################
+
+
+# Run BCFtools RoH for each sample separately - input is filtered genotype calls in vcf.gz format
+
+module load bcftools/1.9
+for file in *White_rhino_5x_0.2ab.vcf.gz ; do sample=$(echo $file | cut -d'.' -f1); bcftools roh -G30 --AF-dflt 0.4 --output $sample.White_rhino_5x_0.2ab.roh $file
+
+
+
+# Parse the output of BCFtools RoH and make the necessary calculations
+
+## in all calculations: exclude RoH of quality below 30 phred score and length below 100 kb and consider only RoH in the 63 longest autosomal scaffolds (listed in scaffold_list.txt)
+
+## calculate Froh
+for file in *.White_rhino_5x_0.2ab.roh ; do echo $file ; grep RG $file | grep -f scaffold_list.txt | awk '{ if($8<30) skip; else print}' | awk '{ if($6<100000) skip; else print}' | awk '{ sum += $6 } END { print sum/1877174582 }' ; done | paste - -
+
+## calculate average RoH length per samples 
+for file in *.White_rhino_5x_0.2ab.roh ; do echo $file ; grep RG $file | grep -f scaffold_list.txt | awk '{ if($8<30) skip; else print}' | awk '{ if($6<100000) skip; else print}' | awk '{ total += $6 } END { print total/NR }' ; done | paste - -
+
+## calculate max RoH length per sample
+for file in *.White_rhino_5x_0.2ab.roh ; do echo $file ; grep RG $file | grep -f scaffold_list.txt | awk '{ if($8<30) skip; else print}' | awk '{ if($6<100000) skip; else print}' | sort -nk6,6 | tail -1 | cut -f3,6  ; done | paste - -
+
+
+## transfer all these values to spreadsheet TableS1_v6
+

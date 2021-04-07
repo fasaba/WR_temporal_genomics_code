@@ -6,6 +6,125 @@ output: html_document
 ---
 
 
+
+## Build a database that includes the black rhino ref and annotation that was used for mapping
+```{bash}
+# in the snpEff folder:
+## copy the br ref used to the snpEff/data/genomes/ folder under the name black_rhino.fa
+## copy the corresponding gff file to snpEff/data/black_rhino folder (newly made) under the number of genes.gff
+## modify the snpEff.config file to include the black rhino specific lines
+### the black rhino lines are:
+nano WRtoBR_lines.txt
+        # BlackRhino, version 19Dec2016_S9zPn
+        black_rhino.genome : BlackRhino
+
+### take template config file, and add the black rhino lines
+cat temp.config2 WRtoBR_lines.txt > snpEff.config3
+
+### change the name of the modified config file
+cp snpEff.config3 snpEff.config
+
+### build the database with snpEff
+java -jar snpEff.jar build -gff3 -v black_rhino
+
+```
+
+
+## Call genotypes for each sample separately with the bam files from mapping these white rhinos against the black rhino assembly
+```{bash}
+
+## generate all sites vcfs
+for file in $(cat SWR_bamlist.txt); do BN=$(echo $file | awk -F/ '{print $NF}'| cut -d '.' -f1); java -Djava.io.tmpdir=/home/scratch/ -XX:ParallelGCThreads=16 -XX:+UseParallelGC -XX:-UsePerfData -Xms5g -Xmx60g -jar /GenomeAnalysisTK/GenomeAnalysisTK.jar -T HaplotypeCaller -R /PATH/TO/BLACK/RHINO/REF/ASSEMBLY/black_rhino_ref.fasta --output_mode EMIT_ALL_SITES -I $file -o $BN".allsites.vcf"  -nct 5 -ERC BP_RESOLUTION --min_base_quality_score 20 -mmq 30 ; done
+
+## compress as produced with bgzip
+for file in *vcf ; do bgzip $file ; done 
+
+## make a tabix index for each created vcf 
+module load tabix/1.2.1 
+for file in *vcf.gz ; do tabix -p vcf $file ; done 
+
+## Convert to gvcf files
+for file in *.allsites.vcf.gz ; do basename=$(echo $file | cut -d '.' -f1) ; java -Djava.io.tmpdir=/home/people/fasaba/scratch/ -jar /GenomeAnalysisTK/GenomeAnalysisTK.jar -T GenotypeGVCFs -R /PATH/TO/BLACK/RHINO/REF/ASSEMBLY/black_rhino_ref.fasta --variant $file --includeNonVariantSites -o "$basename".g.vcf" ; done 
+
+## compress as produced with bgzip
+for file in *g.vcf ; do bgzip $file ; done 
+
+## make a tabix index for each created vcf 
+module load tabix/1.2.1 
+for file in *g.vcf.gz ; do tabix -p vcf $file ; done 
+
+```
+
+
+## Filter sites from genomic vcfs and annotate homozygous derived sites of at least 10x with snpEff 
+```{bash}
+# snpEff annotations for only:
+# biallelic sites
+# homozygous derived
+# min depth of 10x
+
+# filter and annotate the sites 
+for vcf in /PATH/TO/VCF/FILES/*.g.vcf.gz ; do name=$(echo $vcf | awk -F/ '{print $NF}' | sed 's/.g.vcf.gz//g') ; zcat $vcf | bcftools view -c 1 -g hom -i 'TYPE="snp" && FORMAT/DP>9' $vcf | java -Xmx4g -jar ./snpEff/snpEff.jar -c ./snpEff/snpEff.config -v black_rhino | bgzip > $name.Black_rhino.snpeff.minDP10.homD.vcf.gz ; done
+
+# parse output with snpSift
+for file in *.snpeff.minDP10.homD.vcf.gz ; do sample=$(echo $file | cut -d'.' -f1-5); echo $sample ; zcat $file | ./snpEff/scripts/vcfEffOnePerLine.pl | java -jar ./snpEff/SnpSift.jar extractFields - CHROM POS REF ALT "EFF[*].IMPACT" "EFF[*].GENE" "EFF[*].EFFECT" > $sample.EffList ; done
+```
+
+
+
+## To estimate genetic load, use script LoadStats.sh that takes as parameters one input file: an effect list of a sample
+```{bash}
+#!/bin/bash
+
+sample=$(echo $1 | cut -d'.' -f1,4,5)
+
+rm $sample.LoadStats
+touch $sample.LoadStats
+
+
+
+# number of synonymous variants
+echo "synonymous" >> $sample.LoadStats
+zcat $1 | grep synonymous | wc -l >> $sample.LoadStats
+
+# number of missense variants 
+echo "missense" >> $sample.LoadStats
+zcat $1 | grep missense | wc -l >> $sample.LoadStats
+
+# total number of LOF variants 
+echo "total_LoF" >> $sample.LoadStats
+zcat $1 | grep HIGH | grep -e stop_gained -e frameshift_variant -e splice_acceptor_variant -e splice_donor_variant | wc -l >> $sample.LoadStats
+
+# number of genes harbouring at least one LOF variant
+echo "genes_min1_LoF" >> $sample.LoadStats
+zcat $1 | grep HIGH | grep -e stop_gained -e frameshift_variant -e splice_acceptor_variant -e splice_donor_variant | cut -f6 | sort | uniq | wc -l >> $sample.LoadStats
+
+# save list of unique genes with at least one LOF
+#zcat $1 | grep -v intergenic | grep HIGH | grep -e stop_gained -e frameshift_variant -e splice_acceptor_variant -e splice_donor_variant | cut -f6 | sort | uniq > $sample.minDP8.genesLOF
+
+
+# parse the output
+cat $sample.LoadStats | paste - - | awk '{for (i=1; i<=NF; i++) a[i,NR]=$i ; max=(max<NF?NF:max)} END {for (i=1; i<=max; i++) {for (j=1; j<=NR; j++) printf "%s%s", a[i,j], (j==NR?RS:FS) }}' | sed 's/ /\t/g' > glup
+mv glup $sample.LoadStats
+```
+
+
+
+## Run LoadStats.sh for each sample and then parse the output files
+```{bash}
+# make the appropriate counts
+for file in *snpeff.minDP10.homD.EffList.gz ; do echo $file ; bash LoadStats.sh $file ; done
+
+# calculate the relevant ratios: missense/syn and lof/syn
+for file in *minDP10.homD.LoadStats ; do echo $file ; awk 'NR>1 { $5=$2/$1 ; $6=$3/$1} {print}' $file ; done | grep -v synonymous | paste - - | sed 's/.LoadStats//g' | sed 's/ /\t/g' 
+```
+
+Transfer the relevant counts and ratios to the TableS1_v6 for visualization.
+
+
+
+## Visualize results
+
 Load required libraries
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 library(ggplot2)
@@ -23,442 +142,12 @@ library(gridExtra)
 ```
 
 
-
 Open input data
 ```{r}
-snpeff = read.csv("snpeff_output.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+load = read.csv("WR_TableS1_v6.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 ```
 
 
-
-
-
-## Plot number of homozygous and heterozygous derived sites per individual
-
-```{r}
-snpeff$group=factor(snpeff$group,levels=c("SWRpre Namibia","SWRpre South Africa","SWRpost South Africa", "SWRpost captive"))
-```
-
-Plot the number of hom and het derived sites
-```{r}
-ggplot(snpeff, aes(lab_ID, hom_derived)) + 
-  geom_col(aes(group=cluster, fill=cluster)) +
-  coord_flip()
-
-ggplot(snpeff, aes(lab_ID, het_derived)) + 
-  geom_col(aes(group=group, fill=group)) +
-  coord_flip()
-```
-
-
-
-## Plot the ratio of lof/syn per individual
-
-```{r}
-homratio = ggplot(snpeff, aes(lab_ID, lof_syn_ratio)) + theme_bw() +
-  geom_col(aes(group=group, fill=group)) +
-  coord_flip() +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +
-  labs(y="Homozygous derived LoF/synonymous ratio", x="Sample ID") +
-  theme(legend.title=element_blank())
-
-homratio
-```
-
-
-
-
-## Plotting per time window
-```{r}
-snpeff$time_window=factor(snpeff$time_window,levels=c("SWRpre", "SWRpost"))
-```
-
-
-```{r}
-# the hom ratio
-homratio1 = ggplot(snpeff, aes(time_window, lof_syn_ratio)) + theme_bw() +
-  
-  # plot distribution and points
-  #geom_violin(aes(group=time_window, colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
-  geom_boxplot(aes(group=time_window, colour=time_window), fill="gray70", lwd=.5, alpha=.4) +
-  geom_point(aes(time_window, lof_syn_ratio, group=time_window, colour=time_window), shape=17, cex=2, alpha=.7) +
-  
-  # add colour scale
-  scale_color_manual(values= (c("royalblue4", "steelblue3"))) +
-  
-  # format axes and labels
-  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1), limits=c(0.013, 0.027), breaks=seq(0.014, 0.026, 0.004)) +
-  labs(y="LoF/synonymous ratio at homozygous derived sites", x=NULL) +
-  theme(legend.position = "none", axis.text.x=element_text(size=12)) +
-  
-  # add stats and an unpaired wilcox test to compare the medians
-  #stat_summary(fun=median, geom="crossbar", colour='gray30', width=.12, lwd=.4) +
-  
-  # run comparison with wilcox test
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "greater"), label.y = c(0.026, 0.027), colour="gray20") +
-  
-  # add labels to SWRpre
-  geom_text_repel(data=subset(snpeff, time_window!="SWRpost"), aes(label=sample), colour="grey20", size=3, point.padding=1, box.padding=1, direction="x", segment.size=.2)
-
-homratio1
-
-
-```
-
-
-
-## Plotting per time window and Country
-
-```{r}
-snpeff$group=factor(snpeff$group,levels=c("SWRpre Namibia","SWRpre South Africa","SWRpost South Africa", "SWRpost captive"))
-```
-
-
-```{r}
-# the hom ratio
-homratio2 = ggplot(snpeff, aes(group, lof_syn_ratio)) + theme_bw() +
-  geom_boxplot(aes(group=group, colour=group), fill="gray70", lwd=.5, alpha=.4) +
-  geom_jitter(aes(group, lof_syn_ratio, group=group, colour=group), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
-  
-  scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
-  
-  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1)) +
-  labs(y="LoF/synonymous ratio at homozygous derived sites", x=NULL) +
-  theme(legend.position = "none", axis.text.x=element_text(angle=20, hjust=1)) +
-  
-  geom_text_repel(data=snpeff, aes(label=sample), segment.size=.15, size=2)
-
-homratio2
-
-
-```
-
-
-
-## Plotting per time window and cluster
-
-```{r}
-snpeff$cluster=factor(snpeff$cluster,levels=c("SWRpre West", "SWRpre East" ,"SWRpost wild", "SWRpost captive"))
-```
-
-```{r}
-# the hom ratio
-homratio3 = ggplot(snpeff, aes(cluster, lof_syn_ratio)) + theme_bw() +
-  geom_boxplot(aes(group=cluster, colour=cluster), fill="gray70", lwd=.5, alpha=.4) +
-  geom_jitter(aes(cluster, lof_syn_ratio, group=cluster, colour=cluster), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
-  
-  scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
-  
-  scale_y_continuous(labels = scales::percent_format(accuracy = 0.1), limits=c(0.013, 0.027), breaks=seq(0.014, 0.026, 0.004)) +
-  
-  labs(y="LoF/synonymous ratio at homozygous derived sites", x=NULL) +
-  theme(legend.position = "none", axis.text.x=element_text(angle=30, hjust=1, size=12)) +
-  
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre West", "SWRpre East")), method.args = list(alternative = "greater"), label.y = c(0.026)) +
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpost wild", "SWRpost captive")), method.args = list(alternative = "two.sided"), label.y = c(0.024)) +
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre East", "SWRpost wild")), method.args = list(alternative = "less"), label.y = c(0.022))
-
-  #geom_text_repel(data=snpeff, aes(label=sample), segment.size=.15, size=2)
-
-homratio3
-
-
-```
-
-
-## Make composite figure for manuscript
-
-```{r}
-homratio_fig = ggarrange(homratio1, 
-          homratio3 + theme(axis.text.y = element_blank(),
-                     axis.ticks.y = element_blank(),
-                     axis.title.y = element_blank()), 
-          nrow=1, ncol=2, align="h", widths=c(1.2, 1), labels=c("A", "B"))
-
-homratio_fig
-```
-
-
-
-```{r}
-pdf("WR_v4_Fig6_GeneticLoad.pdf", height=5, useDingbats = F)
-homratio_fig
-dev.off()
-```
-
-
-## Comparison of genomic metrics in SWRpre of interest
-
-Open metadata and genomic metrics table
-```{r}
-md = read.csv("WR_TableS1_v5.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
-```
-
-Subset the table to keep only the samples of interest
-```{r}
-swrpre = subset(md, sample_name == "NA1845.1" | sample_name == "NA1857.1" |  sample_name == "ZA-un.1" | sample_name == "NA1856.1" | sample_name == "ZA1869.1")
-```
-
-
-Create a cluster variable to separate the West and the East samples
-```{r}
-swrpre$Cluster = c("East", "West", "East", "West", "West")
-```
-
-
-Order the levels of the Cluster variable for plotting
-```{r}
-swrpre$sample_name = with(swrpre, factor(sample_name, levels=sample_name[order(Cluster)]))
-```
-
-
-### GW Het in SWRpre samples of interest
-
-```{r}
-swrpreH = ggplot(swrpre, aes(sample_name, gw_het_GL2_5x_ErTv, colour=Cluster, fill=Cluster)) + theme_bw() +
-  geom_col(alpha=.9, width=.5) +
-  theme(axis.text.x=element_text(size=8, angle=20, hjust=1), axis.title.x=element_text(size=9)) +
-  labs(x="Sample name", y=expression("Genome-wide heterozygosity")) +
-  scale_fill_manual(values=c("#4169e1", "royalblue4")) +
-  scale_colour_manual(values=c("#4169e1", "royalblue4")) +
-  coord_flip()
-
-swrpreH
-```
-
-
-### Froh in SWRpre samples of interest
-
-```{r}
-swrpreF = ggplot(swrpre, aes(sample_name, Froh, fill=Cluster, colour=Cluster)) + theme_bw() +
-  geom_col(alpha=.9, width=.5) +
-  theme(axis.text.x=element_text(size=8, angle=20, hjust=1), axis.title.x=element_text(size=9)) +
-  labs(x="Sample name", y=expression("F"["RoH"])) +
-  scale_fill_manual(values=c("#4169e1", "royalblue4")) +
-  scale_colour_manual(values=c("#4169e1", "royalblue4")) +
-  coord_flip() 
-
-swrpreF
-```
-
-
-
-
-### The genetic load in SWRpre of interest
-
-Plot the genetic load in the SWRpre of interest
-
-```{r}
-snpeffSWRpre = subset(snpeff, sample == "NA1845.1" | sample == "NA1857.1" |  sample == "ZA-un.1" | sample == "NA1856.1" | sample == "ZA1869.1")
-```
-
-First set the order of the time windows as they should appear on the plot
-```{r}
-snpeffSWRpre$cluster=factor(snpeffSWRpre$cluster,levels=c("SWRpre East","SWRpre West"))
-```
-
-Order the levels of the Cluster variable for plotting
-```{r}
-snpeffSWRpre$sample = with(snpeffSWRpre, factor(sample, levels=sample[order(cluster)]))
-```
-
-
-```{r}
-swrpreG = ggplot(snpeffSWRpre, aes(sample, lof_syn_ratio, fill=cluster, colour=cluster, group=cluster)) + theme_bw() +
-  geom_col(alpha=.9, width=.5) +
-  theme(axis.text.x=element_text(size=8, angle=20, hjust=1), axis.title.x=element_text(size=9), 
-        legend.margin=margin(0,0,0,0), legend.box.margin=margin(-1,-1,-1,-1), legend.text=element_text(size=8), legend.key.size=unit(.6, "cm")) +
-  labs(x="Sample name", y="LoF/synonymous ratio") +
-  scale_fill_manual(values=c("#4169e1", "royalblue4")) +
-  scale_colour_manual(values=c("#4169e1", "royalblue4")) +
-  coord_flip() 
-
-
-swrpreG
-```
-
-
-Make the composite figure
-
-```{r}
-figS9 = ggarrange(swrpreH + guides(colour=F, fill=F), 
-                  swrpreF + theme(axis.text.y=element_blank(), axis.title.y=element_blank(), axis.ticks.y=element_blank()) + guides(colour=F, fill=F),
-                  swrpreG + theme(axis.text.y=element_blank(), axis.title.y=element_blank(), axis.ticks.y=element_blank()),
-                    nrow=1, ncol=3, align="h", widths=c(1.2, 0.8, 1.35))
-figS9
-```
-
-
-```{r}
-pdf("WR_v4_FigS9_SWRpre.pdf", height=4, useDingbats = F)
-figS9
-dev.off()
-```
-
-
-
-
-#####################################################################################################
-
-### Extra
-
-### Visualizing other ratios
-
-
-```{r}
-snpeff$cluster=factor(snpeff$cluster,levels=c("SWRpre West", "SWRpre East" ,"SWRpost wild", "SWRpost captive"))
-```
-
-
-The LoF to total number of derived homozygous sites ratio
-```{r}
-
-ggplot(snpeff, aes(cluster, lof_total_ratio)) + theme_bw() +
-  geom_boxplot(aes(group=cluster, colour=cluster), fill="gray70", lwd=.5, alpha=.4) +
-  geom_jitter(aes(cluster, lof_total_ratio, group=cluster, colour=cluster), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
-  
-  scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
-  
-  scale_y_continuous(labels = scales::percent_format(accuracy = 0.001)) +
-  
-  labs(y="LoF/total ratio at homozygous derived sites", x=NULL) +
-  theme(legend.position = "none", axis.text.x=element_text(angle=30, hjust=1, size=12)) +
-  
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre West", "SWRpre East")), method.args = list(alternative = "greater")) +
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpost wild", "SWRpost captive")), method.args = list(alternative = "two.sided")) 
-
-  #geom_text_repel(data=snpeff, aes(label=sample), segment.size=.15, size=2)
-
-
-```
-
-
-The LoF to intergenic number of derived homozygous sites ratio
-```{r}
-
-ggplot(snpeff, aes(cluster, lof_intergenic_ratio)) + theme_bw() +
-  geom_boxplot(aes(group=cluster, colour=cluster), fill="gray70", lwd=.5, alpha=.4) +
-  geom_jitter(aes(cluster, lof_intergenic_ratio, group=cluster, colour=cluster), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) +
-  
-  scale_color_manual(values= (c("royalblue4", "#4169e1", "#0077be", "steelblue3"))) +
-  
-  scale_y_continuous(labels = scales::percent_format(accuracy = 0.001)) +
-  
-  labs(y="LoF/intergenic ratio at homozygous derived sites", x=NULL) +
-  theme(legend.position = "none", axis.text.x=element_text(angle=30, hjust=1, size=12)) +
-  
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre West", "SWRpre East")), method.args = list(alternative = "greater")) +
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpost wild", "SWRpost captive")), method.args = list(alternative = "two.sided")) 
-
-  #geom_text_repel(data=snpeff, aes(label=sample), segment.size=.15, size=2)
-
-
-```
-
-
-
-
-###################################################################################################################################
-# NEW GENETIC LOAD ANALYSIS
-
-
-
-Open input data
-```{r}
-load = read.csv("WR_v5_GeneticLoad.csv", h=T, fill=T, stringsAsFactors=T, fileEncoding="latin1")
-```
-
-```{r}
-loadss = subset(load, homD_sites > 5000000)
-```
-
-
-Visualize
-
-```{r}
-load$time_window=factor(load$time_window,levels=c("NWRpre", "NWRpost" ,"SWRpre", "SWRpost"))
-loadss$time_window=factor(loadss$time_window,levels=c("NWRpre", "SWRpre", "SWRpost"))
-```
-
-
-
-Missense to synonymous ratio
-```{r}
-# for all samples
-A = ggplot(load, aes(time_window, homD_dNdS)) + theme_bw() +
-  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) + 
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
-  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
-  
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost")), method.args = list(alternative = "two.sided")) +
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "two.sided")) +
-  theme(legend.position = "none") +
-  geom_text_repel(label=load$lab_ID, size=2)
-A
-
-# excluding samples with few sites
-B = ggplot(loadss, aes(time_window, homD_dNdS)) + theme_bw() +
-  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) + 
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
-  scale_color_manual(values= (c("gold3", "royalblue4", "steelblue3"))) +
-  
-  #stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost")), method.args = list(alternative = "greater")) +
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "two.sided")) +
-  theme(legend.position = "none") +
-  geom_text_repel(label=loadss$lab_ID, size=2)
-
-B
-```
-
-
-LoF to synonymous ratio
-```{r}
-load$time_window=factor(load$time_window,levels=c("NWRpre", "NWRpost" ,"SWRpre", "SWRpost"))
-loadss$time_window=factor(loadss$time_window,levels=c("NWRpre", "SWRpre", "SWRpost"))
-```
-
-```{r}
-
-# for all samples
-C = ggplot(load, aes(time_window, homD_lofsyn)) + theme_bw() +
-  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) + 
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
-  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
-  
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost")), method.args = list(alternative = "two.sided")) +
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "two.sided")) +
-  theme(legend.position = "none") +
-  geom_text_repel(label=load$lab_ID, size=2)
-C
-
-
-# excluding samples with few sites
-D = ggplot(loadss, aes(time_window, homD_lofsyn)) + theme_bw() +
-  geom_boxplot(aes(colour=time_window), fill="gray70", lwd=.5, alpha=.4) + 
-  geom_jitter(aes(colour=time_window), shape=17, position=position_jitter(0.11), cex=2, alpha=.7) + 
-  scale_color_manual(values= (c("gold3", "royalblue4", "steelblue3"))) +
-  
-  #stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("NWRpre", "NWRpost")), method.args = list(alternative = "greater")) +
-  stat_compare_means(paired=F, method = "wilcox.test", comparisons = list(c("SWRpre", "SWRpost")), method.args = list(alternative = "two.sided")) +
-  theme(legend.position = "none") +
-  geom_text_repel(label=loadss$lab_ID, size=2)
-D
-
-
-```
-
-
-
-
-```{r}
-pdf("WR_v5_LoadMinDP8_test2.pdf", width=9, useDingbats = F)
-ggarrange(A, B, C, D)
-dev.off()
-```
-
-
-
-#### Genetic load in the SWR
 ```{r}
 loadswr = subset(load, subspecies == "simum" & depth_of_coverage >= 10)
 dim(loadswr)

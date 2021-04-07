@@ -1,0 +1,33 @@
+
+##########################################################
+# Genotype calling with GATK HaplotypeCaller per sample
+##################################
+
+
+# Genotyping
+
+java -XX:ParallelGCThreads=16 -XX:+UseParallelGC -XX:-UsePerfData -Xms5g -Xmx60g -jar GenomeAnalysisTK-3.3-0/GenomeAnalysisTK.jar -T HaplotypeCaller -R reference.fasta --output_mode EMIT_ALL_SITES -I bamfile.bam -o output.vcf -nct 5 -ERC BP_RESOLUTION --min_base_quality_score 20 -mmq 30
+
+java -XX:ParallelGCThreads=16 -XX:+UseParallelGC -XX:-UsePerfData -Xms5g -Xmx60g -jar GenomeAnalysisTK-3.3-0/GenomeAnalysisTK.jar -T GenotypeGVCFs -R reference.fasta -V output.vcf -allSites -o output_genotypes.vcf
+
+java -XX:ParallelGCThreads=16 -XX:+UseParallelGC -XX:-UsePerfData -Xms5g -Xmx60g -jar /services/tools/ngs/GenomeAnalysisTK-3.3-0/GenomeAnalysisTK.jar -T SelectVariants -R reference.fasta -V output_genotypes.vcf -xlSelectType INDEL -xlSelectType MNP -xlSelectType MIXED -xlSelectType SYMBOLIC -o output_genotypes_raw.vcf
+
+
+# Filtering output genotype calls per sample
+
+## this command creates a bash script per sample containing the two filtering command lines
+for i in *_raw.vcf; do name=$(echo $i |cut -f 1 -d "."); echo "perl varfilt_5x.pl -i  $i -o "$name".White_rhino_genotypes_5xfiltered.vcf" > "$name"_GT_filter_5x_0.2ab.sh; echo "perl allelicRatioF.pl -i "$name".White_rhino_genotypes_5xfiltered.vcf -o "$name".White_rhino_5x_0.2ab.vcf" >> "$name"_GT_filter_5x_0.2ab.sh; done
+
+## varfilt_5x.pl is a script that removes all sites whose depth of coverage is below 5x (see as separate file)
+## allelicRatioF.pl is a perl script that filters for allele balance of at least 20%, i.e. heterozygous sites where the alternative allele is not supported by at least 20% of the reads are discarded (see code as separate file)
+
+
+## compress vcf files
+for vcf in *White_rhino_5x_0.2ab.vcf ; do bgzip $vcf ; done
+
+## create a tabix index for each vcf file
+module load  tabix/1.2.1
+for vcf in *White_rhino_5x_0.2ab.vcf.gz ; do tabix -p vcf $vcf ; done
+
+
+

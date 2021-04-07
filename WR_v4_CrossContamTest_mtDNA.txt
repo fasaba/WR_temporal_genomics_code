@@ -1,0 +1,73 @@
+
+#####################################################################################################
+# Cross-contamination test with mitochondrial reads 
+# Finding multiallelic sites in the mitochondrial reads and calculating minor allele(s) frequency
+################################################################
+
+
+##
+# 1. Calculate allele counts for chrM with angsd per sample
+
+
+# just looking at the chrM region in the bam files mapped against the whole reference genome
+# compute an allele count matrix for each bam file
+
+module load angsd/0.921
+
+while read line; do basename=$(echo $line | cut -d '/' -f9 | cut -d '.' -f1) ; angsd -nThreads 40 -ref /PATH/TO/REFERENCE/ASSEMBLY/white_rhino_ref.fasta -i $line -r chrM -remove_bads 1 -uniqueOnly 1 -baq 1 -C 50 -minMapQ 30 -minQ 20  -doCounts 1 -dumpCounts 4 -out ./"$basename".above13Mb_NoSexChr_NonMaskedRegions.chrM.allelecounts ; done < WR_52I_bamlist.txt
+
+
+##
+# 2. Make the plots of allele frequencies for each individual, code from Jazmín Ramos-Madrigal
+R
+GetMAF<-function(x){
+x<-sort(x, decreasing=T)
+maf<-x[2]/x[1]
+return(maf)
+}
+GetNumAlleles<-function(x){
+return(sum(x!=0))
+}
+d<-read.table("WR.above13Mb_NoSexChr_NonMaskedRegions.chrM.allelecounts.counts", as.is=T, h=T)
+inds<-unique(sapply(strsplit(colnames(d), "_"), "[[", 1))
+
+list(inds)
+
+for(i in 1:length(inds)){
+
+ids<-which(sapply(strsplit(colnames(d), "_"), "[[", 1)==inds[i])
+maf<-apply(d[,ids], 1, GetMAF)
+nalleles_per_site<-apply(d[,ids], 1, GetNumAlleles)
+
+pdf(paste0("MTcounts_", inds[i], ".pdf"), width=12, height=7)
+par(mfrow=c(1,2))
+barplot(table(nalleles_per_site), border="mediumpurple", xlab="Alleles per site", ylab="Freq.", main=inds[i], col="lavender")
+
+hist(maf, col="lavender", border="mediumpurple", xlab="Minor allele freq.", main="")
+
+dev.off()
+
+}
+
+
+q("no")
+
+
+
+##
+# 3. Calculating fraction of multiallelic sites
+
+for file in *.above13Mb_NoSexChr_NonMaskedRegions.chrM.allelecounts.counts.gz; do basename=$(echo $file | cut -d '.' -f1) ; echo $basename; zcat $file | grep -v ind | wc -l  ; zcat $file | grep -v ind | awk '(($1 != 0)+($2 != 0)+($3 != 0)+($4 != 0))>1' | wc -l ; done | paste - - - | awk '{$4=$3/$2} {print $1,$2,$3,$4} OFS="\t"' > WR.multiallele_sites_chrM.txt
+
+
+##
+# 4. Calculating the number of multiallelic sites that harbor a minor allele frequency above 2% or 5%
+for file in *.above13Mb_NoSexChr_NonMaskedRegions.chrM.allelecounts.counts.gz; do basename=$(echo $file | cut -d '.' -f1) ; echo $basename; zcat $file | grep -v ind | awk '(($1 != 0)+($2 != 0)+($3 != 0)+($4 != 0))>1' | awk '{nal=$1+$2+$3+$4} {print A=$1/nal, T=$2/nal, G=$3/nal, C=$4/nal}' | awk '(($1>= 0.02 && $1<= 0.5) || ($2>= 0.02 && $2<= 0.5) || ($3>= 0.02 && $3<= 0.5) || ($4>= 0.02 && $4<= 0.5))' | wc -l ;  done | paste - - > WR.multiallelic_sites_above02.txt
+for file in *.above13Mb_NoSexChr_NonMaskedRegions.chrM.allelecounts.counts.gz; do basename=$(echo $file | cut -d '.' -f1) ; echo $basename; zcat $file | grep -v ind | awk '(($1 != 0)+($2 != 0)+($3 != 0)+($4 != 0))>1' | awk '{nal=$1+$2+$3+$4} {print A=$1/nal, T=$2/nal, G=$3/nal, C=$4/nal}' | awk '(($1>= 0.05 && $1<= 0.5) || ($2>= 0.05 && $2<= 0.5) || ($3>= 0.05 && $3<= 0.5) || ($4>= 0.05 && $4<= 0.5))' | wc -l ;  done | paste - - > WR.multiallelic_sites_above05.txt
+
+
+##
+# 5. Calculating the proportion of multiallelic  sites whose minor allele freq is below 2% or 5%
+paste WR.multiallele_sites_chrM.txt WR.multiallelic_sites_above02.txt | awk '{$7=(1-($6/$3))*100} {print $1, $7}'
+paste WR.multiallele_sites_chrM.txt WR.multiallelic_sites_above05.txt | awk '{$7=(1-($6/$3))*100} {print $1, $7}'
+

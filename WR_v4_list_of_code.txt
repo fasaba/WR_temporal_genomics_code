@@ -1,0 +1,34 @@
+
+- example of yaml file for paleomix - check
+
+- depth across scaffolds per sample - check
+
+- normalized depth for detecting sex linked scaffolds - check
+
+- error - check
+
+- mitochondrial cross-contamination test 
+
+- GL panels - check
+    for relatedness test - check
+    for PCA - check
+    for admixture - check
+
+- Genotype calls - check
+    for RoH - check
+
+- Het in windows - check
+
+- Heterozygosity estimates - check
+
+- Genetic load 
+    mapping against black rhino
+    calling GTs
+    filter and annotate with snpEff
+    parse output
+
+
+- All plotting R scripts 
+
+- varfilt and allelicratio pl - check
+- het.py and scan_het_v2

@@ -1,0 +1,145 @@
+---
+title: "RoH_len_time"
+author: "Fátima S. Barreiro"
+date: "April 5, 2021"
+output: html_document
+---
+
+
+Load required libraries
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(ggplot2)
+library(cowplot)
+library(ggrepel)
+library(reshape2)
+library(dplyr)
+library(tidyverse)
+library(data.table)
+require(scales)
+library(ggpubr)
+library(tidyr)
+library(PairedData)
+library(gridExtra)
+```
+
+
+
+
+Open the data
+```{r}
+roh = read.table("WR.RoH.minqual30.minlen100kb.txt",  h=F, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+dim(roh)
+colnames(roh) = c("RG", "sample", "scaffold", "start", "stop", "length", "sites", "quality")
+```
+
+
+Order the RoH by length per sample, and calculate the fraction of the total length that the RoH contribute to
+```{r}
+roh_order = roh[with(roh, order(sample, length)),]
+
+roh_order$csum <- ave(roh_order$length, roh_order$sample, FUN=cumsum)
+
+roh_order$rohfrac <- (roh_order$csum)/1877174582
+
+```
+
+
+
+Filter out the samples that should not be included in this analysis
+```{r}
+roh_order_ss = filter(roh_order, sample!='mwr_TG0450' & sample!='mwr_TG0451' & sample!='mwr_TG0456' & sample!='mwr_TGF01' & sample!='mwr_TGF02' & sample!='mwr_TGF04' & sample!='mwr_TG0452' & sample!='mwr_TG0461')
+
+roh_order_ss$sample <- factor(roh_order_ss$sample)
+```
+
+
+Add info about the time window of each sample
+```{r}
+library(dplyr)
+
+roh_order_ss$time_window = recode(roh_order_ss$sample, mwr_TG0453="NWRpre", mwr_TG0454="NWRpre", mwr_TG0455="NWRpre", mwr_TG0458="NWRpre", mwr_TG0460="NWRpre", mwr_TG0462="NWRpre", 
+                                  mwr_TG0463="NWRpre", mwr_TG0465="NWRpre", mwr_TGF14="NWRpre", mwr_TGF15="NWRpre", mwr_TGF16="NWRpre",
+                                  
+                                  wr_SRR5852741="NWRpost",  wr_SRR5852742="NWRpost",  wr_SRR5852743="NWRpost",  wr_SRR5852744="NWRpost",  wr_SRR5852745="NWRpost",  wr_SRR5852746="NWRpost",
+                                   wr_SRR5852747="NWRpost",  wr_SRR5852748="NWRpost",  wr_SRR5852749="NWRpost", 
+                                  
+                                  mwr_TG0449="SWRpre", mwr_TGF03="SWRpre", mwr_TGF05="SWRpre",  mwr_TGF06="SWRpre", mwr_TGF07="SWRpre", mwr_TGF09="SWRpre",
+                                  
+                                  mwr_TGF10= "SWRpost", mwr_TGF11= "SWRpost", mwr_TGF12= "SWRpost", mwr_TGF13= "SWRpost", mwr_TGF17= "SWRpost", wr_P9109_102= "SWRpost", 
+                                  wr_P9109_103= "SWRpost",wr_P9109_104= "SWRpost",wr_P9109_105= "SWRpost",wr_P9109_106= "SWRpost",wr_P9109_107= "SWRpost",wr_P9109_108= "SWRpost",
+                                  wr_P9109_109= "SWRpost",wr_P9109_110= "SWRpost",
+                                  wr_SRR5852738= "SWRpost",wr_SRR5852739= "SWRpost",wr_SRR5852740= "SWRpost",wr_SRR5852750= "SWRpost")
+
+```
+
+
+
+First set the order of the time windows as they should appear on the plot
+```{r}
+roh_order_ss$time_window=factor(roh_order_ss$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+```
+
+
+Visualize
+```{r}
+rohage = ggplot(roh_order_ss, aes(length, rohfrac, group=sample, colour=time_window)) + geom_line() + theme_bw() +
+  
+  scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
+  scale_x_continuous(limits=c(100000, 13400000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(1000000, 13400000, 2000000 )) +
+  xlab("Length of RoH") +
+  ylab("Cumulative fraction of total length in RoH (Mbp)") +
+  theme(legend.title=element_blank()) +
+  geom_text_repel(label=roh_order_ss$sample)
+rohage  
+
+```
+
+
+
+```{r}
+pdf("WR_v5_FigS8_RoHage.pdf", useDingbats = F)
+rohage
+dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

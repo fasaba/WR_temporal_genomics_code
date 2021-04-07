@@ -1,0 +1,27 @@
+
+###########################################################################
+# Genome-wide heterozygosity estimate per sample with ANGSD and realSFS
+##########################################
+
+
+# 1. Generate saf files per sample 
+
+## filtering out sites below 5x DoC
+## excluding transitions 
+## compute genotype likelihoods with GL2 
+
+for bamfile in $(cat WR_52I_bamlist.txt); do sample=$(echo $bamfile | cut -d '/' -f9 | cut -d '.' -f1) ; angsd -nThreads 40 -ref /PATH/TO/REFERENCE/ASSEMBLY/white_rhino_ref.fasta -anc /PATH/TO/REFERENCE/ASSEMBLY/white_rhino_ref.fasta -i $bamfile -rf scaffold_list.txt -sites nonMasked_regions.pos -remove_bads 1 -uniqueOnly 1 -baq 1 -C 50 -minMapQ 30 -minQ 20 -doSaf 1 -fold 1 -GL 2 -noTrans 1 -doCounts 1 -setMinDepth 5 -out $sample.White_rhino.GL2_noTrans.sfs ; done
+
+
+
+# 2. Estimate sfs with realSFS and the saf.idx file for each sample
+for file in *White_rhino.GL2_noTrans.sfs.saf.idx ; do sample=$(echo $file | cut -d'.' -f1) ; PATH/angsd/misc/realSFS -P 10 -nsites 100000000 $file > $sample.White_rhino.GL2_noTrans.est.ml
+
+
+# 3. Calculate heterozygosity for each estimated sfs
+for file in *White_rhino.GL2_noTrans.est.ml; do echo $file ; awk '{sum1 += $1} {sum2 += $2} END {print sum2/(sum1+sum2)}' $file ; done | awk '{printf "%s%s",$0,NR%2?"\t":RS}' 
+
+
+## collect the heterozygosity estimates for all samples and paste them on spreadsheet TableS1_v6
+
+

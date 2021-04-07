@@ -1,0 +1,70 @@
+
+
+##################################################################################
+# Panels of genotype likelihoods (GL) for several subsets of the white rhino samples
+############################################################################
+
+module load angsd/0.921
+
+
+# *WR_total_bamlist.txt is the list of input bam files, with the path to their location
+# scaffold_list.txt is the list of scaffold names for 63 autosomal scaffolds above 13 Mbp with the format requested from ANGSD, i.e. "scaffold_name:". These are the regions ANGSD will look up.
+# nonMasked_regions.pos is the list of non-masked regions in the reference assembly. These are the regions ANGSD will consider for analysis
+
+####
+# GL panels with total samples per subspecies - for relatedness test
+##
+
+# NWR
+angsd -nThreads 40 -ref PATH/TO/REFERENCE/ASSEMBLY/white.rhino.ref.fasta -bam NWR_total_bamlist.txt -rf scaffold_list.txt -sites nonMasked_regions.pos -remove_bads 1 -uniqueOnly 1 -baq 1 -C 50 -minMapQ 30 -minQ 20 -minInd 24 -doCounts 1 -GL 2 -doGlf 2 -doMajorMinor 1 -doMaf 1 -doHWE 1 -dosnpstat 1 -HWE_pval 1e-2 -SNP_pval 1e-6 -setMaxDepth 500 -setMinDepth 100 -out NWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2
+
+# SWR
+angsd -nThreads 40 -ref PATH/TO/REFERENCE/ASSEMBLY/white.rhino.ref.fasta -bam SWR_total_bamlist.txt -rf scaffold_list.txt -sites nonMasked_regions.pos -remove_bads 1 -uniqueOnly 1 -baq 1 -C 50 -minMapQ 30 -minQ 20 -minInd 26  -doCounts 1 -GL 2 -doGlf 2 -doMajorMinor 1 -doMaf 1 -doHWE 1 -dosnpstat 1 -HWE_pval 1e-2 -SNP_pval 1e-6 -setMaxDepth 500 -setMinDepth 100 -out SWR.27I.above13Mb_NoSexChr_NonMaskedRegions_GL2
+
+
+
+####
+# GL panel for 49 unrelated samples - for PCA and admixture
+##
+
+angsd -nThreads 40 -ref PATH/TO/REFERENCE/ASSEMBLY/white.rhino.ref.fasta -bam wr_bamlist_49ind.txt -rf scaffold_list.txt -sites nonMasked_regions.pos -remove_bads 1 -uniqueOnly 1 -baq 1 -C 50 -minMapQ 30 -minQ 20 -minInd 47 -doCounts 1 -GL 2 -doGlf 2 -doMajorMinor 1 -doMaf 1 -doHWE 1 -dosnpstat 1 -HWE_pval 1e-2 -SNP_pval 1e-6 -setMaxDepth 900 -setMinDepth 200 -out WR.49I.above13Mb_NoSexChr_NonMaskedRegions_GL2
+
+
+
+###
+# GL panels per subspecies excluding related samples - for PCA
+##
+
+# NWR
+angsd -nThreads 40 -ref PATH/TO/REFERENCE/ASSEMBLY/white.rhino.ref.fasta -bam NWR_unrelated_bamlist.txt -rf scaffold_list.txt -sites nonMasked_regions.pos -remove_bads 1 -uniqueOnly 1 -baq 1 -C 50 -minMapQ 30 -minQ 20 -minInd 23 -doCounts 1 -GL 2 -doGlf 2 -doMajorMinor 1 -doMaf 1 -doHWE 1 -dosnpstat 1 -HWE_pval 1e-2 -SNP_pval 1e-6 -setMaxDepth 500 -setMinDepth 100 -out NWR.24I.above13Mb_NoSexChr_NonMaskedRegions_GL2
+
+# SWR
+angsd -nThreads 40 -ref PATH/TO/REFERENCE/ASSEMBLY/white.rhino.ref.fasta -bam SWR_unrelated_bamlist.txt -rf scaffold_list.txt -sites nonMasked_regions.pos -remove_bads 1 -uniqueOnly 1 -baq 1 -C 50 -minMapQ 30 -minQ 20 -minInd 24  -doCounts 1 -GL 2 -doGlf 2 -doMajorMinor 1 -doMaf 1 -doHWE 1 -dosnpstat 1 -HWE_pval 1e-2 -SNP_pval 1e-6 -setMaxDepth 500 -setMinDepth 100 -out SWR.25I.above13Mb_NoSexChr_NonMaskedRegions_GL2
+
+
+
+##
+# Excluding transitions from output files
+
+# from GL beagle file
+zcat FILENAME.beagle.gz | awk '{ if ($2==0 && $3==2 || $2==2 && $3==0 || $2==1 && $3==3 || $2==3 && $3==1) next} {print}' | gzip > FILENAME_tv.beagle.gz 
+
+# from allele frequency maf files
+zcat FILENAME.mafs.gz | awk '{ if ($3=="C" && $4=="T" || $3=="T" && $4=="C" || $3=="A" && $4=="G" || $3=="G" && $4=="A") next} {print}' | gzip > FILENAME_tv.mafs.gz
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
