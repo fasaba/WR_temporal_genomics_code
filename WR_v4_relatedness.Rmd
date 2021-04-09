@@ -11,7 +11,7 @@ output: html_document
 ## Computing pairwise relatedness with ngsRelate
 
 
-```{bash}
+```{bash eval=FALSE, include=FALSE}
 ########################################
 # Relatedness test for each subspecies 
 ######################
@@ -215,9 +215,9 @@ plots
 
 
 ```{r}
-pdf("WR_v4_FigS5_Relatedness", useDingbats = F)
-plots
-dev.off()
+# pdf("WR_v4_FigS5_Relatedness", useDingbats = F)
+# plots
+# dev.off()
 ```
 
 

@@ -9,7 +9,7 @@ output: html_document
 
 # Computing covariance matrices
 
-```{bash}
+```{bash eval=FALSE, include=FALSE}
 # For all unrelated samples
 python pcangsd-0.973/pcangsd.py -beagle WR.49I.above13Mb_NoSexChr_NonMaskedRegions_GL2_unrelated.tv.beagle.gz -o WR.49I.above13Mb_NoSexChr_NonMaskedRegions_GL2_unrelated.tv -threads 20 -maf_iter 200
 
@@ -370,9 +370,9 @@ fig
 
 
 ```{r}
-pdf('WR_v5_Fig2_PCAs.pdf', height=6, width=8, useDingbats = F)
-fig
-dev.off()
+# pdf('WR_v5_Fig2_PCAs.pdf', height=6, width=8, useDingbats = F)
+# fig
+# dev.off()
 ```
 
 
