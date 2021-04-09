@@ -27,7 +27,7 @@ library(gridExtra)
 
 Open the data
 ```{r}
-roh = read.table("WR.RoH.minqual30.minlen100kb.txt",  h=F, fill=T, stringsAsFactors=T, fileEncoding="latin1")
+roh = read.table("WR.RoH.minqual30.minlen100kb.ss.txt",  h=F, fill=T, stringsAsFactors=T, fileEncoding="latin1")
 dim(roh)
 colnames(roh) = c("RG", "sample", "scaffold", "start", "stop", "length", "sites", "quality")
 ```
@@ -45,19 +45,11 @@ roh_order$rohfrac <- (roh_order$csum)/1877174582
 
 
 
-Filter out the samples that should not be included in this analysis
-```{r}
-roh_order_ss = filter(roh_order, sample!='mwr_TG0450' & sample!='mwr_TG0451' & sample!='mwr_TG0456' & sample!='mwr_TGF01' & sample!='mwr_TGF02' & sample!='mwr_TGF04' & sample!='mwr_TG0452' & sample!='mwr_TG0461')
-
-roh_order_ss$sample <- factor(roh_order_ss$sample)
-```
-
-
 Add info about the time window of each sample
 ```{r}
 library(dplyr)
 
-roh_order_ss$time_window = recode(roh_order_ss$sample, mwr_TG0453="NWRpre", mwr_TG0454="NWRpre", mwr_TG0455="NWRpre", mwr_TG0458="NWRpre", mwr_TG0460="NWRpre", mwr_TG0462="NWRpre", 
+roh_order$time_window = recode(roh_order$sample, mwr_TG0453="NWRpre", mwr_TG0454="NWRpre", mwr_TG0455="NWRpre", mwr_TG0458="NWRpre", mwr_TG0460="NWRpre", mwr_TG0462="NWRpre", 
                                   mwr_TG0463="NWRpre", mwr_TG0465="NWRpre", mwr_TGF14="NWRpre", mwr_TGF15="NWRpre", mwr_TGF16="NWRpre",
                                   
                                   wr_SRR5852741="NWRpost",  wr_SRR5852742="NWRpost",  wr_SRR5852743="NWRpost",  wr_SRR5852744="NWRpost",  wr_SRR5852745="NWRpost",  wr_SRR5852746="NWRpost",
@@ -76,20 +68,19 @@ roh_order_ss$time_window = recode(roh_order_ss$sample, mwr_TG0453="NWRpre", mwr_
 
 First set the order of the time windows as they should appear on the plot
 ```{r}
-roh_order_ss$time_window=factor(roh_order_ss$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
+roh_order$time_window=factor(roh_order$time_window,levels=c("NWRpre","NWRpost","SWRpre", "SWRpost"))
 ```
 
 
 Visualize
 ```{r}
-rohage = ggplot(roh_order_ss, aes(length, rohfrac, group=sample, colour=time_window)) + geom_line() + theme_bw() +
+rohage = ggplot(roh_order, aes(length, rohfrac, group=sample, colour=time_window)) + geom_line() + theme_bw() +
   
   scale_color_manual(values= (c("gold3", "darkorange", "royalblue4", "steelblue3"))) +
   scale_x_continuous(limits=c(100000, 13400000), labels = function(x) format(x/1000000, digits=3, nsmall=2), breaks=seq(1000000, 13400000, 2000000 )) +
   xlab("Length of RoH") +
   ylab("Cumulative fraction of total length in RoH (Mbp)") +
-  theme(legend.title=element_blank()) +
-  geom_text_repel(label=roh_order_ss$sample)
+  theme(legend.title=element_blank()) 
 rohage  
 
 ```
